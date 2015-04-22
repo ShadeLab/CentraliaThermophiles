@@ -1,0 +1,56 @@
+data=read.table("Thermophile_Occurrence_Table.txt", header=TRUE, sep="\t", row.names=1)
+Occ.History<-data[,1:3]
+Occ.History.pa<-1*(Occ.History>0)
+Stage<-data$RecoveryStage
+
+sink("occmodel_Centralia.txt")
+cat("
+    model {
+    
+    # Priors
+    alpha.occ ~ dunif(0,1) # Mean occupancy probability of Fire affected sites. 
+    beta.occ ~ dunif(0,1) #Mean occupancy probability of Recovered site
+    alpha.p ~ dunif(0,1) # Mean detection probability of thermophile in fire affected sites.
+    beta.p ~ dunif(0,1)  # Effect of Recovery Stage on detection probability
+    
+    # Likelihood
+    #True State
+    for (i in 1:R) {
+    z[i]~ dbern(psi[i])
+    psi[i]<- alpha.occ*(1-Stage[i]) + beta.occ*Stage[i]
+    
+    #Detection Process
+    for (j in 1:T){
+    y[i,j]~ dbern(p.eff[i,j])
+    p.eff[i,j]<- z[i]*p[i,j]
+    p[i,j]<- alpha.p*(1-Stage[i]) +beta.p*Stage[i]
+    } #j
+    } #i
+    
+    # Derived quantities
+    occ.fs <- sum(z[])       # Number of occupied sites among those studied
+    }
+    ",fill = TRUE)
+sink()
+win.data <- list(Stage=Stage, y=Occ.History.pa, R=nrow(Occ.History.pa), T=ncol(Occ.History.pa))
+zst <- apply(Occ.History.pa, 1, max, na.rm = TRUE)
+
+inits <- function(){list(z = zst, alpha.occ = runif(1, 0, 1), beta.occ = runif(1, 0, 1), 
+                         alpha.p = runif(1, 0, 1), beta.p = runif(1, 0, 1))}
+params <- c("alpha.occ", "beta.occ", "alpha.p", "beta.p", "occ.fs")
+
+ni <- 100000
+nt <- 8
+nb <- 20000
+nc <- 3
+
+library("R2jags")
+
+out2 <- jags(win.data, inits, params, "occmodel_Centralia.txt", n.chains = nc, n.thin = nt, 
+             n.iter = ni, n.burnin = nb, working.directory = getwd())
+
+jagsout <- as.mcmc.list(out2$BUGSoutput)
+plot(jagsout)
+summary(jagsout)
+
+
