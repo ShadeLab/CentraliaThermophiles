@@ -26,22 +26,39 @@ head(collapsed_soils_rel)
 length(Sample_Temp)
 ###Calculate Pearson OTU vs Temperature (+) Correlation p-value<0.05
 coretest.out=NULL
-TempCorOTUs=NULL
+TempCorOTUs_rel=NULL
+TempCorOTUs_ABS=NULL
 for(i in 1:nrow(collapsed_soils_rel)){
   results=cor.test(collapsed_soils_rel[i,],Sample_Temp)
   if(results[4]>0){
     if(results[3]<0.05){
-      TempCorOTUs=rbind(TempCorOTUs,c(collapsed_soils_rel[i,],rdp[i]))
+      TempCorOTUs_rel=rbind(TempCorOTUs_rel,c(collapsed_soils_rel[i,],rdp[i]))
+      TempCorOTUs_ABS=rbind(TempCorOTUs_ABS,c(collapsed_soils[i,],rdp[i]))
       coretest.out=rbind(coretest.out,c(row.names(collapsed_soils_rel)[i],results$estimate,results$p.value))
                         }
   }
   
 }
-colnames(TempCorOTUs)=c(colnames(collapsed_soils_rel),"Taxonomy")
+colnames(TempCorOTUs_rel)=c(colnames(collapsed_soils_rel),"Taxonomy")
 colnames(coretest.out)=c("OTU_ID","Correlation_Coefficient","p-value")
-rownames(TempCorOTUs)=coretest.out[,1]
+colnames(TempCorOTUs_ABS)=c(colnames(collapsed_soils_rel),"Taxonomy")
+rownames(TempCorOTUs_rel)=coretest.out[,1]
+rownames(TempCorOTUs_ABS)=coretest.out[,1]
+range(coretest.out[,2])
+range(coretest.out[,3])
+summary(coretest.out[,2])
+sum(1*(coretest.out[,2]>0.75))
 
+OTUs_R75=coretest.out[coretest.out[,2]>0.75,]
 
+### Make and write out a summed table of otus for temperature correlated otus
+summed=NULL
+summed_row=NULL
+for (i in 1:nrow(TempCorOTUs_ABS)){
+  summed_row=sum(as.double(TempCorOTUs_ABS[i,1:18]))
+  summed=rbind(summed,c(summed_row,TempCorOTUs_ABS[i,19]))
+}
+write.table(summed, file="/Users/JSorensen/Desktop/VennAnalysis/Summed_TempCor_OTUs.txt", sep="\t")
 
 ### Calculate % of community per sample that is from otus that respond positively to temperature
 Percent_Thermophile=c(rep(0,18))
@@ -49,6 +66,13 @@ for(i in 1:18){Percent_Thermophile[i]=sum(as.numeric(TempCorOTUs[,i]))}
 Percent_Thermophile
 plot(Sample_Temp,Percent_Thermophile)
 
+Positivie_sig_PA=1*(TempCorOTUs_ABS>0)
+
+Positive_sig_otus=colSums(Positivie_sig_PA)
+Positive_sig_otus_Percent=NULL
+Positive_sig_otus_Percent=Positive_sig_otus/dim(collapsed_soils_rel)[1]
+Positive_sig_otus_Percent
+plot(Sample_Temp,Positive_sig_otus_Percent[1:18])
 
 ###Calculate Pearson OTU vs Temperature Correlation p-value>0.05
 coretest.out_nonsig=NULL
@@ -120,6 +144,29 @@ Percent_NonThermophile_nonsig
 plot(Sample_Temp,Percent_NonThermophile_nonsig)
 
 
+Percent_NonThermophile_nonsig + Percent_NonThermophile + Percent_Thermophile_nonsig + Percent_Thermophile
+
+### Correlation for Negative Temperature Response p-value>0.05
+No_coretest.out=NULL
+NoCorOTUs=NULL
+for(i in 1:nrow(collapsed_soils_rel)){
+  results=cor.test(collapsed_soils_rel[i,],Sample_Temp)
+  results[4]
+  if(results[4]==0){
+      NoCorOTUs=rbind(NoCorOTUs,c(collapsed_soils_rel[i,],rdp[i]))
+      No_coretest.out=rbind(No_coretest.out,c(row.names(collapsed_soils_rel)[i],results$estimate,results$p.value))
+    }
+  }
+  
+}
+colnames(NoCorOTUs)=c(colnames(collapsed_soils_rel),"Taxonomy")
+colnames(No_coretest.out)=c("OTU_ID","Correlation_Coefficient","p-value")
+rownames(NoCorOTUs)=No_coretest.out[,1]
+
+
+
+
+
 
 row.names(combined)[1]
 
@@ -133,6 +180,13 @@ for(i in 1:length(u)){
   out=cbind(out,sNew)
 }
 colnames(out)=u
+
+
+
+
+
+
+
 
 library(vegan)
 out.REL=decostand(out, method="total", MARGIN=2)
