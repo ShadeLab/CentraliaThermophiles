@@ -1,0 +1,14 @@
+#! /bin/bash
+#PBS -l walltime=07:00:00:00
+#PBS -l mem=400Gb
+#PBS -l nodes=1:ppn=16
+#PBS -e /mnt/research/ShadeLab/WorkingSpace/Jackson/
+#PBS -o /mnt/research/ShadeLab/WorkingSpace/Jackson/
+#PBS -N Megahit_QC
+#PBS -A bicep
+#PBS -M jacksonwsorensen@gmail.com
+#PBS -m abe
+module load megahit
+cd /mnt/research/ShadeLab/WorkingSpace/Jackson
+megahit -1 Cen13_mgDNA_Pooled_CTTGTA_L002_R1_001.fastq.gz -2 Cen13_mgDNA_Pooled_CTTGTA_L002_R2_001.fastq.gz --k-list 27,37,47,57,67,77,87,97,107 -o Megahit_QC_Assembly/ -t $PBS_NUM_PPN
+

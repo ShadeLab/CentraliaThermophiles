@@ -1,0 +1,16 @@
+#! /bin/bash
+#PBS -l walltime=06:00:00
+#PBS -l mem=100Gb
+#PBS -l nodes=1:ppn=12
+#PBS -e /mnt/research/ShadeLab/WorkingSpace/
+#PBS -o /mnt/research/ShadeLab/WorkingSpace/
+#PBS -N QualityFiltering
+#PBS -A bicep
+#PBS -M jacksonwsorensen@gmail.com
+#PBS -m abe 
+module load fastx
+cd /mnt/research/ShadeLab/WorkingSpace/Jackson
+gunzip -c  Cen13_mgDNA_Pooled_CTTGTA_L002_R1_001.fastq.gz | fastq_quality_filter -Q33 -q 30 -p 50 -z -o Cen13_mgDNA_Pooled_CTTGTA_L002_R1_001.qc.fastq.gz
+gzip Cen13_mgDNA_Pooled_CTTGTA_L002_R1_001.fastq
+gunzip -c Cen13_mgDNA_Pooled_CTTGTA_L002_R2_001.fastq.gz | fastq_quality_filter -Q33 -q 30 -p 50 -z -o Cen13_mgDNA_Pooled_CTTGTA_L002_R2_001.qc.fastq.gz
+gzip Cen13_mgDNA_Pooled_CTTGTA_L002_R2_001.fastq
