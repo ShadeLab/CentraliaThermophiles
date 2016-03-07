@@ -1,5 +1,5 @@
 ### Reading in the Data
-soils=read.table("subsamplingtable_even73419_R.txt", header=TRUE, sep="\t", row.names=1, stringsAsFactors=FALSE)#read in the otu table
+soils=read.table("susamplingtable_even73419_R.txt", header=TRUE, sep="\t", row.names=1, stringsAsFactors=FALSE)#read in the otu table
 rdp=soils[,ncol(soils)]# save the taxonomy as a vector
 map=read.table("Centralia_Full_Map_Fixed.txt", header=TRUE, sep="\t", row.names=1, check.names=FALSE, stringsAsFactors=FALSE)#read in the mapping file
 soils=soils[,-ncol(soils)] #remove consensus lineage column
