@@ -66,4 +66,4 @@ for(i in 1:nrow(KEGG_rel_Rpob)){
 
 
 ### Write the list of temperature correlated kegg orthologs
-write(coretest.out[,1], "Temperature_Correlated_KOs_rpobrel.txt")
+write.table(coretest.out[,1], "Temperature_Correlated_KOs_rpobrel.txt")
