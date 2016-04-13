@@ -75,4 +75,7 @@ for(i in 1:nrow(KEGG_rel_Rpob)){
 write(coretest.out[,1], "Temperature_Correlated_KOs_rpobrel.txt")
 ```
 
-Need to alter the file so that it works in the KEGG pathway tool. 
+Need to alter the file so that it works in the KEGG pathway tool. Open the output file from the Rscript in a plain text editior and find and replace `KO:` with nothing. Also find and replace all `"` with nothing. Finally, replace the first line with `#IdentifierforyourKEGGS`.
+
+### Using the KEGG Pathway Reconstruct tool
+Go to the [KEGG Mapper Tool](http://www.genome.jp/kegg/tool/map_pathway.html). Upload the formatted output file from the R script(containing one column of numbers and a second column of KO numbers), check `Include global/overview maps` and press `exec`. If you want to look at multiple sets of KOs at a time, like + correlated temperature KOs and negatively correlated temperature KOs, you need them both in the same file but the lists separated by a header like as is the first line(IE header for group 1, all KOs for group 1, header for group 2, all KOs for group 2).   
