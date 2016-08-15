@@ -35,8 +35,7 @@ ax2.pa.v=K.pa.pcoa$eig[2]/sum(K.pa.pcoa$eig)
 ?plot
 dev.off()
 setEPS()
-###postscript("KO_PcoA_PA.eps", width = 6.770, height=3.385, pointsize=8,paper="special")
-postscript("KO_PcoA_PA.png", width = 6.770, height=3.385, pointsize=8,paper="special")
+postscript("KO_PcoA_PA.eps", width = 6.770, height=3.385, pointsize=8,paper="special")
 plot(K.pa.pcoa$points[,1], K.pa.pcoa$points[,2],cex=1.5, bg=class, pch=21,main= "Presence/Absence Bray Curtis KEGG PCoA",xlab= paste("PCoA1: ",100*round(ax1.pa.v,3),"% var. explained",sep=""), ylab= paste("PCoA2: ",100* round(ax2.pa.v,3),"% var. explained",sep=""))
 ###textxy(X=K.pa.pcoa$points[,1], Y=K.pa.pcoa$points[,2],labs=map_sub$Sample, cex=1)
 
@@ -55,8 +54,7 @@ ax2.v=k.pcoa$eig[2]/sum(k.pcoa$eig)
 ?plot
 dev.off()
 setEPS()
-###postscript("KO_PcoA_Relativized.eps", width = 6.770, height=3.385, pointsize=8,paper="special")
-postscript("KO_PcoA_Relativized.png", width = 6.770, height=3.385, pointsize=8,paper="special")
+postscript("KO_PcoA_Relativized.eps", width = 6.770, height=3.385, pointsize=8,paper="special")
 plot(k.pcoa$points[,1], k.pcoa$points[,2],cex=1.5, bg=class, pch=21, main= "rpoB Relativized Bray Curtis KEGG PCoA", xlab= paste("PCoA1: ",100*round(ax1.v,3),"% var. explained",sep=""), ylab= paste("PCoA2: ",100* round(ax2.v,3),"% var. explained",sep=""))
 ###textxy(X=k.pcoa$points[,1], Y=k.pcoa$points[,2],labs=map_sub$Sample, cex=1)
 
