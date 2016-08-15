@@ -33,12 +33,17 @@ K.pa.pcoa<- cmdscale(K.dist.pa, eig=TRUE)
 ax1.pa.v=K.pa.pcoa$eig[1]/sum(K.pa.pcoa$eig)
 ax2.pa.v=K.pa.pcoa$eig[2]/sum(K.pa.pcoa$eig)
 ?plot
+dev.off()
+setEPS()
+###postscript("KO_PcoA_PA.eps", width = 6.770, height=3.385, pointsize=8,paper="special")
+postscript("KO_PcoA_PA.png", width = 6.770, height=3.385, pointsize=8,paper="special")
 plot(K.pa.pcoa$points[,1], K.pa.pcoa$points[,2],cex=1.5, bg=class, pch=21,main= "Presence/Absence Bray Curtis KEGG PCoA",xlab= paste("PCoA1: ",100*round(ax1.pa.v,3),"% var. explained",sep=""), ylab= paste("PCoA2: ",100* round(ax2.pa.v,3),"% var. explained",sep=""))
-textxy(X=K.pa.pcoa$points[,1], Y=K.pa.pcoa$points[,2],labs=map_sub$Sample, cex=1)
+###textxy(X=K.pa.pcoa$points[,1], Y=K.pa.pcoa$points[,2],labs=map_sub$Sample, cex=1)
 
 env=map_sub[,c("SoilTemperature_to10cm", "NO3N_ppm", "pH", "K_ppm", "Mg_ppm", "OrganicMatter_500", "NH4N_ppm", "SulfateSulfur_ppm", "Ca_ppm", "Fe_ppm", "As_ppm", "P_ppm", "SoilMoisture_Per","Fire_history")]
 envEF=envfit(K.pa.pcoa, env)
 plot(envEF, p.max=0.05, col="black")
+dev.off()
 
 ### PCoA Relativized to RPOB
 K.dist <- vegdist(t(KEGG.rpob), method="bray" )
@@ -48,13 +53,17 @@ k.pcoa <-cmdscale(K.dist, eig=TRUE)
 ax1.v=k.pcoa$eig[1]/sum(k.pcoa$eig)
 ax2.v=k.pcoa$eig[2]/sum(k.pcoa$eig)
 ?plot
+dev.off()
+setEPS()
+###postscript("KO_PcoA_Relativized.eps", width = 6.770, height=3.385, pointsize=8,paper="special")
+postscript("KO_PcoA_Relativized.png", width = 6.770, height=3.385, pointsize=8,paper="special")
 plot(k.pcoa$points[,1], k.pcoa$points[,2],cex=1.5, bg=class, pch=21, main= "rpoB Relativized Bray Curtis KEGG PCoA", xlab= paste("PCoA1: ",100*round(ax1.v,3),"% var. explained",sep=""), ylab= paste("PCoA2: ",100* round(ax2.v,3),"% var. explained",sep=""))
-textxy(X=k.pcoa$points[,1], Y=k.pcoa$points[,2],labs=map_sub$Sample, cex=1)
+###textxy(X=k.pcoa$points[,1], Y=k.pcoa$points[,2],labs=map_sub$Sample, cex=1)
 
 env=map_sub[,c("SoilTemperature_to10cm", "NO3N_ppm", "pH", "K_ppm", "Mg_ppm", "OrganicMatter_500", "NH4N_ppm", "SulfateSulfur_ppm", "Ca_ppm", "Fe_ppm", "As_ppm", "P_ppm", "SoilMoisture_Per","Fire_history")]
 envEF=envfit(k.pcoa, env)
 plot(envEF, p.max=0.05, col="black")
-
+dev.off()
 
 Class2=sub("green", "yellow", class)
 ### rpoB relativized hypothesis testing
@@ -99,8 +108,8 @@ fig3 <- ggplot(data=alpha.long, aes(x=Classification, y=value)) +
   scale_x_discrete(name="Fire classification")+
   theme_bw(base_size=10)
 fig3
-ggsave("KO_Richness.eps", width=86, units="mm")
-
+###ggsave("KO_Richness.eps", width=86, units="mm")
+ggsave("KO_Richness.png", width=86, units="mm")
 active <- alpha[alpha$Classification=="red",colnames(alpha)=="Richness"]
 recref <- alpha[alpha$Classification=="yellow",colnames(alpha)=="Richness"]
 
