@@ -225,29 +225,91 @@ setEPS()
 postscript("../Figures/Fig4.eps", width = 4.000, height=4.000, pointsize=8,paper="special")
 vennDiagram(v)
 dev.off()
+### End 16S Analysis
 
-# Calculating Coefficient of Variation:
-http://www.nature.com/articles/srep14840
+
+### PCoA Relativized to RPOB WIP
+library(calibrate)
+class <- rep("black", nrow(map_MG))
+class[map_MG$Classification=="Recovered"]='yellow'
+class[map_MG$Classification=="FireAffected"]='red'
+class[map_MG$Classification=="Reference"]='green'
+
+# KEGG Orthology distanc matrix and PCoA
+K.dist <- vegdist(t(KO.rpob), method="bray" )
+K.dist
+k.pcoa <-cmdscale(K.dist, eig=TRUE)
+
+ax1.v=k.pcoa$eig[1]/sum(k.pcoa$eig)
+ax2.v=k.pcoa$eig[2]/sum(k.pcoa$eig)
+# Read in Weighted UniFrac Distance MAtrix and Calculate PCoA
+uf=read.table("weighted_unifrac_MASTER_OTU_hdf5_filteredfailedalignments_rdp_rmCM_collapse_even321000.txt", header=TRUE, row.names=1)
+
+#sort by rows, columns (so they are in the consecutive order)
+uf=uf[order(row.names(uf)),order(colnames(uf))]
+uf.d=as.dist(uf)
+
+uf.pcoa=cmdscale(uf.d, eig=TRUE)
+#calculate percent variance explained, then add to plot
+ax1.v.uf=uf.pcoa$eig[1]/sum(uf.pcoa$eig)
+ax2.v.uf=uf.pcoa$eig[2]/sum(uf.pcoa$eig)
+
+
+class.uf <- rep("black", nrow(map))
+class.uf[map$Classification=="Recovered"]='yellow'
+class.uf[map$Classification=="FireAffected"]='red'
+class.uf[map$Classification=="Reference"]='green'
+?plot
+dev.off()
+setEPS()
+postscript("../Figures/Figure5.eps", width = 8, height=4, pointsize=8,paper="special")
+par(mfrow=c(1,2))
+plot(k.pcoa$points[,1], k.pcoa$points[,2],cex=1.5, bg=class, pch=21, main= "rpoB Relativized Bray Curtis KEGG PCoA", xlab= paste("PCoA1: ",100*round(ax1.v,3),"% var. explained",sep=""), ylab= paste("PCoA2: ",100* round(ax2.v,3),"% var. explained",sep=""))
+textxy(X=k.pcoa$points[,1], Y=k.pcoa$points[,2],labs=map_MG$Sample, cex=1)
+
+env=map_MG[,c("SoilTemperature_to10cm", "NO3N_ppm", "pH", "K_ppm", "Mg_ppm", "OrganicMatter_500", "NH4N_ppm", "SulfateSulfur_ppm", "Ca_ppm", "Fe_ppm", "As_ppm", "P_ppm", "SoilMoisture_Per","Fire_history")]
+envEF=envfit(k.pcoa, env)
+plot(envEF, p.max=0.05, col="black")
+
+plot(uf.pcoa$points[,1],uf.pcoa$points[,2] ,cex=1.5,pch=21,bg=class.uf,main="Weighted UniFrac PCoA",xlab= paste("PCoA1: ",100*round(ax1.v.uf,3),"% var. explained",sep=""), ylab= paste("PCoA2: ",100* round(ax2.v.uf,3),"% var. explained",sep=""))
+#textxy is from the calibrate library
+textxy(X=uf.pcoa$points[,1], Y=uf.pcoa$points[,2],labs=map$Sample, cex=1)
+legend('bottomleft',c('Fire Affected','Recovered','Reference'),pch=21,pt.bg=c("red", "yellow", "green"),lty=0)
+
+#Add env vectors to plot that are significant p < 0.10
+env.uf=map[,c("SoilTemperature_to10cm", "NO3N_ppm", "pH", "K_ppm", "Mg_ppm", "OrganicMatter_500", "NH4N_ppm", "SulfateSulfur_ppm", "Ca_ppm", "Fe_ppm", "As_ppm", "P_ppm", "SoilMoisture_Per","Fire_history")]
+envEF.uf=envfit(uf.pcoa, env.uf)
+plot(envEF.uf, p.max=0.05, col="black")
+dev.off()
+
+Class2=sub("green", "yellow", class)
+### rpoB relativized hypothesis testing
+a=adonis(K.dist~Class2, distance=TRUE, permutations=1000)
+a
+### rpoB relativized
+b=betadisper(K.dist, group=Class2)
+TukeyHSD(b, which = "group", ordered = FALSE,conf.level = 0.95)
+
+
+### Using Coefficient of Variation for KEGG Orthologs to identify "responding" genes.
+# Reference for single copy genes http://www.nature.com/articles/srep14840
 KO <- as.matrix(KO)
 
 KO_NZ <- KO[rowSums(KO)>0,]
-CV<- NULL
 
+CV<- NULL
 for(i in 1:nrow(KO_NZ)){
   CV <- c(CV, sd(KO_NZ[i,])/mean(KO_NZ[i,]))
 }
-warnings()
+
 plot(CV)
-
-
-CV[grep("K03043", rownames(KO_NZ),)]
 
 #Single Copy Genes
 SCG <- read.table("Single_Copy_Genes.txt", sep="\t", header=TRUE, stringsAsFactors = FALSE)
 
 SCG_CV <- NULL 
 for(i in 1:nrow(SCG)){
-  SCG_CV <- c(SCG_CV,CV[grep(SCG[i,3], rownames(KO_NZ),)])
+  SCG_CV <- c(SCG_CV,CV[grep(SCG[i,3], rownames(KO_NZ))])
 }
 SCG <- cbind(SCG, SCG_CV)
 
@@ -255,11 +317,42 @@ SCG_Order <- NULL
 for(i in 1:nrow(SCG)){
   SCG_Order <- c(SCG_Order,grep(SCG$KO[i],rownames(KO_NZ)))
 }
+SCG_BaKO<- SCG[SCG$Class=="bacteria",]
+SCG_BoKO <- SCG[SCG$Class=="both",]
+SCG_ArKO<- SCG[SCG$Class=="archaea",]
 
+SCG_Bacteria <- NULL
+for(i in 1:nrow(SCG_BaKO)){
+  SCG_Bacteria <- c(SCG_Bacteria, grep(SCG_BaKO$KO[i],rownames(KO_NZ)))
+}
+
+SCG_Both <- NULL
+for(i in 1:nrow(SCG_BoKO)){
+  SCG_Both <- c(SCG_Both, grep(SCG_BoKO$KO[i],rownames(KO_NZ)))
+}
+
+SCG_Archaea <- NULL
+for(i in 1:nrow(SCG_ArKO)){
+  SCG_Archaea <- c(SCG_Archaea, grep(SCG_ArKO$KO[i],rownames(KO_NZ)))
+}
+
+Weights <- rep(.5, length(CV))
+Weights[SCG_Order]=5
 colors <- rep('black',length(CV))
-colors[SCG_Order]='red'
-plot(CV, col=colors)
-
+colors[SCG_Bacteria]="blue"
+colors[SCG_Both]="green"
+colors[SCG_Archaea]="red"
+dev.off()
+setEPS()
+postscript("../Figures/Figure6.eps", width = 8, height=3, pointsize=8,paper="special")
+par(mfrow=c(1,2))
+plot(CV, col=colors,lwd=Weights)
+hist(CV, prob=TRUE)
+lines(density(CV))
+abline(v = mean(SCG_CV[SCG$Class=="bacteria"]), col = "blue", lwd = 2)
+abline(v= mean(SCG_CV[SCG$Class=="archaea"]), col="red", lwd=2)
+abline(v= mean(SCG_CV[SCG$Class=="both"]), col="green", lwd=2)
+dev.off()
 #KO Responses (using z-score across samples to look for similar patterns)
 comm.phylum.oc=decostand(comm.phylum, method="standardize", margin=1)
 comm.phylum.oc=as.matrix(comm.phylum.oc)
