@@ -38,6 +38,10 @@ for (i in 1:nrow(KO)){
 }
 
 ### Venn Analysis 16S 
+source("http://www.bioconductor.org/biocLite.R")
+biocLite("limma")
+library("limma")
+
 fireclass=map[,"Classification"]
 
 active.pa=1*(comm[,fireclass=="FireAffected"]>0)
@@ -56,6 +60,7 @@ vennDiagram(v)
 
 
 #Write out the results of venncounts
+
 write.table(v, "VennCounts.txt", quote=FALSE, sep="\t")
 par(mfrow=c(1,1))
 setEPS()
