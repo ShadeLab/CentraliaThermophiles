@@ -299,8 +299,10 @@ TukeyHSD(b, which = "group", ordered = FALSE,conf.level = 0.95)
 ### Using Coefficient of Variation for KEGG Orthologs to identify "responding" genes.
 # Reference for single copy genes http://www.nature.com/articles/srep14840
 KO <- as.matrix(KO)
+KO.rpob <- as.matrix(KO.rpob)
 
 KO_NZ <- KO[rowSums(KO)>0,]
+KO.rpob_NZ <- KO.rpob[rowSums(KO.rpob)>0,]
 
 CV<- NULL
 for(i in 1:nrow(KO_NZ)){
@@ -308,6 +310,14 @@ for(i in 1:nrow(KO_NZ)){
 }
 
 plot(CV)
+
+CV.rpob <- NULL
+for(i in 1:nrow(KO.rpob_NZ)){
+  CV.rpob <- c(CV.rpob, sd(KO.rpob_NZ[i,])/mean(KO.rpob_NZ[i,]))
+}
+
+hist(CV)
+hist(CV.rpob)
 
 #Single Copy Genes
 SCG <- read.table("Single_Copy_Genes.txt", sep="\t", header=TRUE, stringsAsFactors = FALSE)
@@ -317,6 +327,12 @@ for(i in 1:nrow(SCG)){
   SCG_CV <- c(SCG_CV,CV[grep(SCG[i,3], rownames(KO_NZ))])
 }
 SCG <- cbind(SCG, SCG_CV)
+
+SCG_CV.rpob <- NULL 
+for(i in 1:nrow(SCG)){
+  SCG_CV.rpob <- c(SCG_CV.rpob,CV.rpob[grep(SCG[i,3], rownames(KO.rpob_NZ))])
+}
+SCG <- cbind(SCG, SCG_CV.rpob)
 
 SCG_Order <- NULL
 for(i in 1:nrow(SCG)){
