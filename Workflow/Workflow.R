@@ -319,6 +319,13 @@ for(i in 1:nrow(KO.rpob_NZ)){
 hist(CV)
 hist(CV.rpob)
 
+# Find KOs with the largest coefficient of variation
+
+High_CV <- KO_NZ[CV.rpob>3,]
+row.names(KO_NZ) <- sub("KO:", "", row.names(KO_NZ))
+
+row.names(KO_NZ[CV.rpob>3,])
+write.table(x=row.names(KO_NZ[CV.rpob>3,]), file="High_CV_KO.txt", sep="\t")
 #Single Copy Genes
 SCG <- read.table("Single_Copy_Genes.txt", sep="\t", header=TRUE, stringsAsFactors = FALSE)
 
