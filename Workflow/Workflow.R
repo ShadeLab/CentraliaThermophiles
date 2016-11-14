@@ -2,6 +2,8 @@
 library(ggplot2)
 library(vegan)
 library(outliers)
+library(gplots)
+library(colorRamps)
 ### Reading in Data Files and Manipulating Datafile
 
 # Mapping File
@@ -319,13 +321,6 @@ for(i in 1:nrow(KO.rpob_NZ)){
 hist(CV)
 hist(CV.rpob)
 
-# Find KOs with the largest coefficient of variation
-
-High_CV <- KO_NZ[CV.rpob>3,]
-row.names(KO_NZ) <- sub("KO:", "", row.names(KO_NZ))
-
-row.names(KO_NZ[CV.rpob>3,])
-write.table(x=row.names(KO_NZ[CV.rpob>3,]), file="High_CV_KO.txt", sep="\t")
 #Single Copy Genes
 SCG <- read.table("Single_Copy_Genes.txt", sep="\t", header=TRUE, stringsAsFactors = FALSE)
 
@@ -381,9 +376,61 @@ abline(v = mean(SCG_CV[SCG$Class=="bacteria"]), col = "blue", lwd = 2)
 abline(v= mean(SCG_CV[SCG$Class=="archaea"]), col="red", lwd=2)
 abline(v= mean(SCG_CV[SCG$Class=="both"]), col="green", lwd=2)
 dev.off()
+
+hist(CV.rpob, prob=TRUE)
+lines(density(CV.rpob))
+abline(v = mean(SCG_CV.rpob[SCG$Class=="bacteria"]), col = "blue", lwd = 2)
+abline(v= mean(SCG_CV.rpob[SCG$Class=="archaea"]), col="red", lwd=2)
+abline(v= mean(SCG_CV.rpob[SCG$Class=="both"]), col="green", lwd=2)
+
+# Find KOs with CV greater than archaeal Single Copy Housekeeping Genes
+High_CV <- KO_NZ[CV.rpob>mean(SCG_CV.rpob[SCG$Class=="archaea"]),]
+row.names(KO_NZ) <- sub("KO:", "", row.names(KO_NZ))
+
+row.names(High_CV) <- sub("KO:", "", row.names(High_CV))
+write.table(x=row.names(High_CV), file="High_CV_KO.txt", sep="\t")
+
 #KO Responses (using z-score across samples to look for similar patterns)
 comm.phylum.oc=decostand(comm.phylum, method="standardize", margin=1)
 comm.phylum.oc=as.matrix(comm.phylum.oc)
 
-KO.rpob.zs <- decostand(KO.rpob, method="standardize", margin=1)
-KO.rpob.zs <- as.matrix(KO.rpob.zs)
+High_CV.zs <- decostand(High_CV, method="standardize", MARGIN=1)
+High_CV.zs <- as.matrix(High_CV.zs)
+
+#create color pallette; see: http://colorbrewer2.org/ 
+hc=colorRampPalette(c("#91bfdb","white","#fc8d59"), interpolate="linear")
+
+Figure7<-heatmap.2(High_CV.zs,col=hc(100),scale="row",key=TRUE,symkey=FALSE, trace="none", density.info="none",dendrogram="both", labRow=row.names(High_CV.zs), colCol=c(class), margins=c(5,13), srtCol=90)
+?heatmap.2
+
+# Ordering Columns by temperature
+High_CV.zs.temp <- High_CV.zs[,order(map_MG$SoilTemperature_to10cm)]
+comm=comm[,order(colnames(comm))]
+
+Figure7B<-heatmap.2(High_CV.zs.temp,col=hc(100),scale="row",key=TRUE,symkey=FALSE, Colv= FALSE, trace="none", density.info="none",dendrogram="row", labRow=row.names(High_CV.zs), colCol=c("green","yellow","yellow","yellow","yellow","yellow","red","red","red","red","red","red"), margins=c(5,13), srtCol=90)
+
+
+### How to define meaningful clusters of KEGG Orthologs based on abundance patterns across the gradient
+coretest.out1<-NULL
+for (i in 1:nrow(High_CV.zs)){
+  results<-cor.test(High_CV.zs[i,],apply(High_CV.zs, 2, median))
+  coretest.out1=rbind(coretest.out1,c(row.names(High_CV.zs)[i],results$estimate,results$p.value))
+  }
+
+cutree(Figure7B$rowDendrogram, k=2)
+warnings()
+HCV_Den <- hclust(dist(High_CV.zs))
+
+cutree(HCV_Den, k=13)
+Output <- NULL
+for(i in 1:13){
+  cluster_Cor <- NULL
+  cluster <- High_CV.zs[cutree(HCV_Den, k=13)==i,]
+  for (n in 1:nrow(cluster)){
+    results<-cor.test(cluster[n,],apply(cluster, 2, median))
+    cluster_Cor<- rbind(cluster_Cor, c(results$estimate,results$p.value))
+    row.names(cluster_Cor[n,]) <- row.names(cluster[n,])
+  }
+  Output <- rbind(Output, c(apply(cluster_Cor, 2, mean), nrow(cluster_Cor)))
+}
+
