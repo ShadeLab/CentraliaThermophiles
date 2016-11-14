@@ -401,7 +401,7 @@ High_CV.zs <- as.matrix(High_CV.zs)
 hc=colorRampPalette(c("#91bfdb","white","#fc8d59"), interpolate="linear")
 
 Figure7<-heatmap.2(High_CV.zs,col=hc(100),scale="row",key=TRUE,symkey=FALSE, trace="none", density.info="none",dendrogram="both", labRow=row.names(High_CV.zs), colCol=c(class), margins=c(5,13), srtCol=90)
-?heatmap.2
+
 
 # Ordering Columns by temperature
 High_CV.zs.temp <- High_CV.zs[,order(map_MG$SoilTemperature_to10cm)]
@@ -436,4 +436,4 @@ class3 <- class
 class3
 class3[12] <- "yellow"
 t.test(colSums(KO_NZ_PA[,class3=="yellow"]),colSums(KO_NZ_PA[,class3=="red"]))
-# No Significant difference in richness of KEGG Orthologs found
+# No Significant difference in richness of KEGG Orthologs found between Recovered/Reference and FireAffected
