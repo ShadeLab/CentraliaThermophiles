@@ -420,7 +420,7 @@ for (i in 1:nrow(High_CV.zs)){
 cutree(Figure7B$rowDendrogram, k=2)
 warnings()
 HCV_Den <- hclust(dist(High_CV.zs))
-
+rect.hclust(HCV_Den, k=12)
 cutree(HCV_Den, k=13)
 Output <- NULL
 for(i in 1:13){
