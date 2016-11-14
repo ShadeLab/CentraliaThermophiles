@@ -411,16 +411,8 @@ Figure7B<-heatmap.2(High_CV.zs.temp,col=hc(100),scale="row",key=TRUE,symkey=FALS
 
 
 ### How to define meaningful clusters of KEGG Orthologs based on abundance patterns across the gradient
-coretest.out1<-NULL
-for (i in 1:nrow(High_CV.zs)){
-  results<-cor.test(High_CV.zs[i,],apply(High_CV.zs, 2, median))
-  coretest.out1=rbind(coretest.out1,c(row.names(High_CV.zs)[i],results$estimate,results$p.value))
-  }
-
-cutree(Figure7B$rowDendrogram, k=2)
-warnings()
 HCV_Den <- hclust(dist(High_CV.zs))
-rect.hclust(HCV_Den, k=12)
+rect.hclust(HCV_Den, k=13)
 cutree(HCV_Den, k=13)
 Output <- NULL
 for(i in 1:13){
@@ -434,3 +426,14 @@ for(i in 1:13){
   Output <- rbind(Output, c(apply(cluster_Cor, 2, mean), nrow(cluster_Cor)))
 }
 
+### KO T-test (difference in functional richness)
+
+KO_NZ_PA <- 1*(KO_NZ>0)
+colSums(KO_NZ_PA)
+
+
+class3 <- class
+class3
+class3[12] <- "yellow"
+t.test(colSums(KO_NZ_PA[,class3=="yellow"]),colSums(KO_NZ_PA[,class3=="red"]))
+# No Significant difference in richness of KEGG Orthologs found
