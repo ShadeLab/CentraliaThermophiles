@@ -377,22 +377,24 @@ abline(v= mean(SCG_CV[SCG$Class=="archaea"]), col="red", lwd=2)
 abline(v= mean(SCG_CV[SCG$Class=="both"]), col="green", lwd=2)
 dev.off()
 
+setEPS()
+postscript("../Figures/Figure6.eps", width = 8, height=3, pointsize=8,paper="special")
 hist(CV.rpob, prob=TRUE)
 lines(density(CV.rpob))
 abline(v = mean(SCG_CV.rpob[SCG$Class=="bacteria"]), col = "blue", lwd = 2)
 abline(v= mean(SCG_CV.rpob[SCG$Class=="archaea"]), col="red", lwd=2)
 abline(v= mean(SCG_CV.rpob[SCG$Class=="both"]), col="green", lwd=2)
-
+dev.off()
 # Find KOs with CV greater than archaeal Single Copy Housekeeping Genes
 High_CV <- KO_NZ[CV.rpob>mean(SCG_CV.rpob[SCG$Class=="archaea"]),]
+#High_CV <- KO_NZ[CV.rpob>mean(SCG_CV.rpob[SCG$Class=="bacteria"]),]
 row.names(KO_NZ) <- sub("KO:", "", row.names(KO_NZ))
 
 row.names(High_CV) <- sub("KO:", "", row.names(High_CV))
 write.table(x=row.names(High_CV), file="High_CV_KO.txt", sep="\t")
 
 #KO Responses (using z-score across samples to look for similar patterns)
-comm.phylum.oc=decostand(comm.phylum, method="standardize", margin=1)
-comm.phylum.oc=as.matrix(comm.phylum.oc)
+
 
 High_CV.zs <- decostand(High_CV, method="standardize", MARGIN=1)
 High_CV.zs <- as.matrix(High_CV.zs)
@@ -412,12 +414,13 @@ Figure7B<-heatmap.2(High_CV.zs.temp,col=hc(100),scale="row",key=TRUE,symkey=FALS
 
 ### How to define meaningful clusters of KEGG Orthologs based on abundance patterns across the gradient
 HCV_Den <- hclust(dist(High_CV.zs))
-rect.hclust(HCV_Den, k=13)
-cutree(HCV_Den, k=13)
+plot(HCV_Den)
+rect.hclust(HCV_Den, h=5.5)
+cutree(HCV_Den, h=5.5)
 Output <- NULL
 for(i in 1:13){
   cluster_Cor <- NULL
-  cluster <- High_CV.zs[cutree(HCV_Den, k=13)==i,]
+  cluster <- High_CV[cutree(HCV_Den, h=5.5)==i,]
   for (n in 1:nrow(cluster)){
     results<-cor.test(cluster[n,],apply(cluster, 2, median))
     cluster_Cor<- rbind(cluster_Cor, c(results$estimate,results$p.value))
@@ -425,6 +428,37 @@ for(i in 1:13){
   }
   Output <- rbind(Output, c(apply(cluster_Cor, 2, mean), nrow(cluster_Cor)))
 }
+
+High_CV_Clusters <- NULL
+High_CV_Clusters <- as.list(High_CV_Clusters)
+for (i in 1:length(unique(cutree(HCV_Den, h=5.5)))){
+  High_CV_Clusters[[length(High_CV_Clusters)+1]] <- as.data.frame(High_CV[cutree(HCV_Den, h=5.5)==i,])
+}
+
+write.table(row.names(High_CV_Clusters[[1]]),"HCVA_H55_C1.txt", sep="\t",quote=FALSE, col.names=FALSE)
+
+write.table(row.names(High_CV_Clusters[[2]]),"HCVA_H55_C2.txt", sep="\t",quote=FALSE, col.names=FALSE)
+
+write.table(row.names(High_CV_Clusters[[3]]),"HCVA_H55_C3.txt", sep="\t",quote=FALSE, col.names=FALSE)
+
+write.table(row.names(High_CV_Clusters[[4]]),"HCVA_H55_C4.txt", sep="\t",quote=FALSE, col.names=FALSE)
+
+write.table(row.names(High_CV_Clusters[[5]]),"HCVA_H55_C5.txt", sep="\t",quote=FALSE, col.names=FALSE)
+
+write.table(row.names(High_CV_Clusters[[6]]),"HCVA_H55_C6.txt", sep="\t",quote=FALSE, col.names=FALSE)
+
+write.table(row.names(High_CV_Clusters[[7]]),"HCVA_H55_C7.txt", sep="\t",quote=FALSE, col.names=FALSE)
+
+write.table(row.names(High_CV_Clusters[[8]]),"HCVA_H55_C8.txt", sep="\t",quote=FALSE, col.names=FALSE)
+
+write.table(row.names(High_CV_Clusters[[9]]),"HCVA_H55_C9.txt", sep="\t",quote=FALSE, col.names=FALSE)
+
+write.table(row.names(High_CV_Clusters[[10]]),"HCVA_H55_C10.txt", sep="\t",quote=FALSE, col.names=FALSE)
+
+write.table(row.names(High_CV_Clusters[[11]]),"HCVA_H55_C11.txt", sep="\t",quote=FALSE, col.names=FALSE)
+
+write.table(row.names(High_CV_Clusters[[12]]),"HCVA_H55_C12.txt", sep="\t",quote=FALSE, col.names=FALSE)
+
 
 ### KO T-test (difference in functional richness)
 
@@ -437,3 +471,30 @@ class3
 class3[12] <- "yellow"
 t.test(colSums(KO_NZ_PA[,class3=="yellow"]),colSums(KO_NZ_PA[,class3=="red"]))
 # No Significant difference in richness of KEGG Orthologs found between Recovered/Reference and FireAffected
+
+
+
+
+
+plot(hclust(dist(t(KO.rpob_NZ))))
+
+### t test of KO abudnace in recovered vs reference sites
+output.out<- NULL
+for(i in 1:nrow(KO.rpob_NZ)){
+  active <- KO.rpob_NZ[i,class3=="red"]
+  recref <- KO.rpob_NZ[i,class3=="yellow"]
+  output <- t.test(active,recref)
+  output.out <- rbind(output.out, c(rownames(KO.rpob_NZ)[i], output$statistic, output$parameter, output$p.value))
+}
+
+hist(output.out[,3])
+sig_KO <- output.out[output.out[,4]<0.05,]
+
+FA_KOs <- sig_KO[sig_KO[,2]>0,]
+RR_KOs <- sig_KO[sig_KO[,2]<0,]
+
+FA_KOs[,1] <- sub("KO:", "", FA_KOs[,1])
+RR_KOs[,1] <- sub("KO:", "", RR_KOs[,1])
+# Outputs for MinPath (http://omics.informatics.indiana.edu/MinPath/run.php)
+write.table(FA_KOs[,1],"Significant_FireAffected_KOs.txt", sep="\t",quote=FALSE, col.names=FALSE)
+write.table(RR_KOs[,1], "Significant_RecRef_KOs.txt", sep="\t", quote=FALSE, col.names=FALSE)
