@@ -134,3 +134,17 @@ Complete_Pos_Sig_Cor_Modules <- Pos_Sig_Cor_Modules[(Pos_Sig_Cor_Modules[,1]/Pos
 
 sum(1*((Pos_Sig_Cor_Modules[,1]/Pos_Sig_Cor_Modules[,10])==1))
 Modules[row.names(Complete_Pos_Sig_Cor_Modules),]
+
+library(colorRamps)
+library(gplots)
+mid_mod.zs <- decostand(mid_mod, method="standardize", MARGIN=1)
+mid_mod.zs.temp <- mid_mod.zs[,order(map_MG$SoilTemperature_to10cm)]
+
+
+hc=colorRampPalette(c("#91bfdb","white","#fc8d59"), interpolate="linear")
+
+heatmap.2(mid_mod.zs,col=hc(100), key=TRUE,symkey=FALSE, trace="none", density.info="none",dendrogram="both", labRow=row.names(mid_mod.zs), margins=c(5,13), srtCol=90)
+
+heatmap.2(mid_mod.zs[Med_Mod_Cor[,3]<0.05,],col=hc(100), key=TRUE,symkey=FALSE, trace="none", density.info="none",dendrogram="both", labRow=row.names(mid_mod.zs[Med_Mod_Cor[,3]<0.05,]), margins=c(5,13), srtCol=90)
+
+heatmap.2(mid_mod.zs.temp[Med_Mod_Cor[,3]<0.05,],col=hc(100),scale="row",key=TRUE,symkey=FALSE, Colv = FALSE, main="Temp Correlated Modules", trace="none", density.info="none",dendrogram="row", labRow=row.names(mid_mod.zs.temp[Med_Mod_Cor[,3]<0.05,]), margins=c(5,13), srtCol=90)
