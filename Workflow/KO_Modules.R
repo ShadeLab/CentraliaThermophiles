@@ -148,3 +148,44 @@ heatmap.2(mid_mod.zs,col=hc(100), key=TRUE,symkey=FALSE, trace="none", density.i
 heatmap.2(mid_mod.zs[Med_Mod_Cor[,3]<0.05,],col=hc(100), key=TRUE,symkey=FALSE, trace="none", density.info="none",dendrogram="both", labRow=row.names(mid_mod.zs[Med_Mod_Cor[,3]<0.05,]), margins=c(5,13), srtCol=90)
 
 heatmap.2(mid_mod.zs.temp[Med_Mod_Cor[,3]<0.05,],col=hc(100),scale="row",key=TRUE,symkey=FALSE, Colv = FALSE, main="Temp Correlated Modules", trace="none", density.info="none",dendrogram="row", labRow=row.names(mid_mod.zs.temp[Med_Mod_Cor[,3]<0.05,]), margins=c(5,13), srtCol=90)
+
+
+install.packages("pcvlust")
+library(pvclust)
+
+result <- pvclust(t(mid_mod.zs[Med_Mod_Cor[,3]<0.05,]), method.dist="cor", method.hclust="average", nboot=1000)
+
+plot(result)
+pvrect(result, alpha=0.6)
+
+
+library(ggplot2)
+install.packages("devtools")
+devtools::install_github("hrbrmstr/ggalt")
+library(ggalt)
+library(scales)
+ggdata <- cbind(row.names(Med_Mod_Cor), Med_Mod_Cor[,1])
+colnames(ggdata) <- c("Module", "T_Statistic")
+ggdata <- as.data.frame(ggdata)
+
+ggdata$Module <- unlist(ggdata$Module)
+ggdata$T_Statistic <- unlist(ggdata$T_Statistic)
+
+ggdata_sig <- ggdata[Med_Mod_Cor[,3]<0.05,]
+
+gg <- ggplot(data=ggdata_sig, aes(x=Module, y=T_Statistic))+
+  geom_bar(width=1, stat="identity")+scale_y_continuous(expand = c(0,0)) + coord_flip() 
+gg  
+
+ 
+ 
+ 
+ 
+ 
+ 
+library(datasets)
+mtcars
+library(plyr)
+# Calculate the mean mpg for each level of cyl
+mm <- ddply(mtcars, "cyl", summarise, mmpg = mean(mpg))
+ggplot(mm, aes(x = factor(cyl), y = mmpg)) + geom_bar(stat = "identity") 
