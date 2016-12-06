@@ -83,51 +83,84 @@ KO_Per_M_Subset <- KO_Per_M[lapply(Dictionary, data.class) != "NULL"]
 Summary_Output <- NULL
 avg_mod <- NULL
 mid_mod <- NULL
+max_mod <- NULL
+min_mod <- NULL
 stdev_mod <- NULL
 for (m in 1:length(Dictionary_Subset)){
   temp_data <- Dictionary_Subset[[m]]
   K_out <- NULL
   agg <- NULL
-  for(k in 1:nrow(temp_data)){
-    cor <- cor.test(as.numeric(temp_data[k,]), map_MG$SoilTemperature_to10cm) 
-    test <- t.test(as.numeric(temp_data[k,map_MG$Class_Color=="red"], as.numeric(temp_data[k, map_MG$Class_Color!="red"])))
-    K_out <- rbind(K_out, c(as.numeric(cor[1]), as.numeric(cor[3]), as.numeric(test[1]), as.numeric(test[3])))
-  }
+  ### This loop calculates the correlation coefficients and t test for each KO in a module. We've decided to go ahead and calculate these for the median values 
+  #for(k in 1:nrow(temp_data)){
+   # cor <- cor.test(as.numeric(temp_data[k,]), map_MG$SoilTemperature_to10cm) 
+    #test <- t.test(as.numeric(temp_data[k,map_MG$Class_Color=="red"], as.numeric(temp_data[k, map_MG$Class_Color!="red"])))
+    #K_out <- rbind(K_out, c(as.numeric(cor[1]), as.numeric(cor[3]), as.numeric(test[1]), as.numeric(test[3])))
+  #}
+  ### Calculates the AVG, Median, Min, Max, and STDEV for the KOs of a module in each given site.
   for (s in 1:ncol(temp_data)){
     avg <- mean(temp_data[,s])
     mid <- median(temp_data[,s])
+    minimum <- min(temp_data[,s])
+    maximum <- max(temp_data[,s])
     stdev <- sd(temp_data[,s])
-    agg <- cbind(agg, c(avg, mid, stdev))
+    agg <- cbind(agg, c(avg, mid, minimum, maximum, stdev))
   }
-  Summary_Output <- rbind(Summary_Output, c(nrow(K_out),apply(K_out, 2, mean), apply(K_out, 2, sd)))
+  #Summary_Output <- rbind(Summary_Output, c(nrow(K_out),apply(K_out, 2, mean), apply(K_out, 2, sd)))
   avg_mod <- rbind(avg_mod, agg[1,])
   mid_mod <- rbind(mid_mod, agg[2,])
-  stdev_mod <- rbind(stdev_mod, agg[3,])
+  min_mod <- rbind(min_mod, agg[3,])
+  max_mod <- rbind(max_mod, agg[4,])
+  stdev_mod <- rbind(stdev_mod, agg[5,])
   }
 
-colnames(Summary_Output) <- c("Number KOs", "Average Pearsons", "Average Pearsons Pvalue", "Average T Statistic", "Average T P value", "SD Pearsons", "SD Pearsons Pvalue", "SD T Statistic", "SD T Pvalue") 
+###colnames(Summary_Output) <- c("Number KOs", "Average Pearsons", "Average Pearsons Pvalue", "Average T Statistic", "Average T P value", "SD Pearsons", "SD Pearsons Pvalue", "SD T Statistic", "SD T Pvalue") 
 colnames(avg_mod) <- map_MG$Sample
 colnames(mid_mod) <- map_MG$Sample
 colnames(stdev_mod) <- map_MG$Sample
+colnames(mid_mod)<- map_MG$Sample
+colnames(max_mod) <- map_MG$Sample
 
-row.names(Summary_Output) <- names(Dictionary_Subset)  
+#row.names(Summary_Output) <- names(Dictionary_Subset)  
 row.names(avg_mod) <- names(Dictionary_Subset)
 row.names(mid_mod) <- names(Dictionary_Subset)
+row.names(max_mod) <- names(Dictionary_Subset)
+row.names(min_mod) <- names(Dictionary_Subset)
 row.names(stdev_mod) <- names(Dictionary_Subset)
 
-median_Module_Correlations <- apply(mid_mod, 1, function(x) cor.test(x, map_MG$SoilTemperature_to10cm))
-Med_Mod_Cor <- NULL
+median_Module_TempCorrelations <- apply(mid_mod, 1, function(x) cor.test(x, map_MG$SoilTemperature_to10cm))
+median_Module_t.test <- apply(mid_mod, 1, function(x) t.test(x[map_MG$Classification=="FireAffected"], x[map_MG$Classification!="FireAffected"]))
+Med_Mod_TempCor <- NULL
 for (i in 1:600){
-  Med_Mod_Cor <- rbind (Med_Mod_Cor, c(median_Module_Correlations[[i]][1],median_Module_Correlations[[i]][2],median_Module_Correlations[[i]][3]))
+  Med_Mod_TempCor <- rbind (Med_Mod_TempCor, c(median_Module_TempCorrelations[[i]][4],median_Module_TempCorrelations[[i]][2],median_Module_TempCorrelations[[i]][3]))
 }
-Med_Mod_Cor <- as.data.frame(Med_Mod_Cor)
-row.names(Med_Mod_Cor) <- names(Dictionary_Subset)
+Med_Mod_Ttest <- NULL
+for (i in 1:600){
+  Med_Mod_Ttest <- rbind (Med_Mod_Ttest, c(median_Module_t.test[[i]][1],median_Module_t.test[[i]][2],median_Module_t.test[[i]][3]))
+}
+
+
+Med_Mod_TempCor <- as.data.frame(Med_Mod_TempCor)
+row.names(Med_Mod_TempCor) <- names(Dictionary_Subset)
+Med_Mod_TempCor[,1] <- unlist(Med_Mod_TempCor[,1])
+Med_Mod_TempCor[,2] <- unlist(Med_Mod_TempCor[,2])
+Med_Mod_TempCor[,3] <- unlist(Med_Mod_TempCor[,3])
+
+Med_Mod_Ttest <- as.data.frame(Med_Mod_Ttest)
+row.names(Med_Mod_Ttest) <- names(Dictionary_Subset)
+Med_Mod_Ttest[,1] <- unlist(Med_Mod_Ttest[,1])
+Med_Mod_Ttest[,2] <- unlist(Med_Mod_Ttest[,2])
+Med_Mod_Ttest[,3] <- unlist(Med_Mod_Ttest[,3])
+
+Sig_Ttest_Mod <- Med_Mod_Ttest[Med_Mod_Ttest[,3]<0.05,]
+
+
+Sig_TempCor_Mod <- Med_Mod_TempCor[Med_Mod_TempCor[,3]<0.05,]
 Pos_Med_Mod_Cor <- Med_Mod_Cor[Med_Mod_Cor[,1]>0,]
 Sig_Pos_Med_Mod_Cor <- Pos_Med_Mod_Cor[Pos_Med_Mod_Cor[,3]<0.05,]
 
-Summary_Output <- cbind(Summary_Output,KO_Per_M_Subset)
-Sig_Cor_Modules <- Summary_Output[Summary_Output[,3]<0.05,]
-Pos_Sig_Cor_Modules <- Sig_Cor_Modules[Sig_Cor_Modules[,2]>0,]
+#Summary_Output <- cbind(Summary_Output,KO_Per_M_Subset)
+#Sig_Cor_Modules <- Summary_Output[Summary_Output[,3]<0.05,]
+#Pos_Sig_Cor_Modules <- Sig_Cor_Modules[Sig_Cor_Modules[,2]>0,]
 
 Complete_Pos_Sig_Cor_Modules <- Pos_Sig_Cor_Modules[(Pos_Sig_Cor_Modules[,1]/Pos_Sig_Cor_Modules[,10])==1,]
 
@@ -177,15 +210,12 @@ gg <- ggplot(data=ggdata_sig, aes(x=Module, y=T_Statistic))+
   geom_bar(width=1, stat="identity")+scale_y_continuous(expand = c(0,0)) + coord_flip() 
 gg  
 
- 
- 
- 
- 
- 
- 
-library(datasets)
-mtcars
-library(plyr)
-# Calculate the mean mpg for each level of cyl
-mm <- ddply(mtcars, "cyl", summarise, mmpg = mean(mpg))
-ggplot(mm, aes(x = factor(cyl), y = mmpg)) + geom_bar(stat = "identity") 
+summary_stats <- read.table("../JGI_Metagenomes/JGI_MG_Summary_Stats.txt", sep="\t", stringsAsFactors = FALSE, row.names=1, header=TRUE) 
+
+### PERMANOVA based on the Module level aggregation Median values
+library(vegan)
+Mod.d <- vegdist(t(mid_mod),method="bray")
+Class <- rep("Red", 12)
+Class[map_MG$Classification!="FireAffected"] <- "Green"
+a=adonis(Mod.d~Class, distance=TRUE, permutations=1000)
+a
