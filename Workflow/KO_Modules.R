@@ -66,7 +66,12 @@ for (i in 1:nrow(Modules)){
 KO_Per_M_Data/KO_Per_M
 
 Dictionary_Subset <- Dictionary[lapply(Dictionary, data.class) != "NULL"]
+Modules_Subset <- Modules[lapply(Dictionary,data.class) != "NULL",]
 KO_Per_M_Subset <- KO_Per_M[lapply(Dictionary, data.class) != "NULL"]
+KO_Per_M_Data_Subset <- KO_Per_M_Data[lapply(Dictionary, data.class) != "NULL"]
+
+#Fraction of KOs from each module present in our dataset
+Module_Completeness <- KO_Per_M_Data_Subset/KO_Per_M_Subset
 
 ### Figure out correlation coefficients? Just do t.tests? 
 # the real question is whether to use the worst, average, or best correlation/t.test result
@@ -127,7 +132,17 @@ row.names(max_mod) <- names(Dictionary_Subset)
 row.names(min_mod) <- names(Dictionary_Subset)
 row.names(stdev_mod) <- names(Dictionary_Subset)
 
+### PERMANOVA based on the Module level aggregation Median values
+library(vegan)
+Mod.d <- vegdist(t(mid_mod),method="bray")
+Class <- rep("Red", 12)
+Class[map_MG$Classification!="FireAffected"] <- "Green"
+a=adonis(Mod.d~Class, distance=TRUE, permutations=1000)
+a
+
+# Temperature Correlations for Each Module
 median_Module_TempCorrelations <- apply(mid_mod, 1, function(x) cor.test(x, map_MG$SoilTemperature_to10cm))
+# T-Test for each Module
 median_Module_t.test <- apply(mid_mod, 1, function(x) t.test(x[map_MG$Classification=="FireAffected"], x[map_MG$Classification!="FireAffected"]))
 Med_Mod_TempCor <- NULL
 for (i in 1:600){
@@ -151,12 +166,19 @@ Med_Mod_Ttest[,1] <- unlist(Med_Mod_Ttest[,1])
 Med_Mod_Ttest[,2] <- unlist(Med_Mod_Ttest[,2])
 Med_Mod_Ttest[,3] <- unlist(Med_Mod_Ttest[,3])
 
-Sig_Ttest_Mod <- Med_Mod_Ttest[Med_Mod_Ttest[,3]<0.05,]
+Sig_Ttest_Modules <- Modules_Subset[Med_Mod_Ttest[,3]<0.05,]
+Sig_TempCor_Modules <- Modules_Subset[Med_Mod_TempCor[,3]<0.05,]
 
+Module_Completeness_Ttest <- Module_Completeness[Med_Mod_Ttest[,3]<0.05]
+Module_Completeness_TempCor <- Module_Completeness[Med_Mod_TempCor[,3]<0.05]
 
-Sig_TempCor_Mod <- Med_Mod_TempCor[Med_Mod_TempCor[,3]<0.05,]
-Pos_Med_Mod_Cor <- Med_Mod_Cor[Med_Mod_Cor[,1]>0,]
-Sig_Pos_Med_Mod_Cor <- Pos_Med_Mod_Cor[Pos_Med_Mod_Cor[,3]<0.05,]
+Complete_Sig_Ttest_Modules <- Sig_Ttest_Modules[Module_Completeness_Ttest==1,]
+Complete_TempCor_Modules <- Sig_TempCor_Modules[Module_Completeness_TempCor==1,]
+
+x <- Complete_Sig_Ttest_Modules[order(Complete_Sig_Ttest_Modules$Module.Type),]
+
+write.table(Complete_Sig_Ttest_Modules[order(Complete_Sig_Ttest_Modules$Module.Type),], "T_Test_Sig_Modules.txt", sep="\t", quote=FALSE)
+write.table(Complete_TempCor_Modules[order(Complete_TempCor_Modules$Module.Type),], "TempCor_Sig_Modules.txt", sep="\t", quote=FALSE)
 
 #Summary_Output <- cbind(Summary_Output,KO_Per_M_Subset)
 #Sig_Cor_Modules <- Summary_Output[Summary_Output[,3]<0.05,]
@@ -170,19 +192,27 @@ Modules[row.names(Complete_Pos_Sig_Cor_Modules),]
 
 library(colorRamps)
 library(gplots)
-mid_mod.zs <- decostand(mid_mod, method="standardize", MARGIN=1)
-mid_mod.zs.temp <- mid_mod.zs[,order(map_MG$SoilTemperature_to10cm)]
-
-
 hc=colorRampPalette(c("#91bfdb","white","#fc8d59"), interpolate="linear")
 
-heatmap.2(mid_mod.zs,col=hc(100), key=TRUE,symkey=FALSE, trace="none", density.info="none",dendrogram="both", labRow=row.names(mid_mod.zs), margins=c(5,13), srtCol=90)
+mid_mod_Ttest <- mid_mod[Med_Mod_Ttest[,3]<0.05,]
+mid_mod_Ttest.zs <- decostand(mid_mod_Ttest, method="standardize", MARGIN=1)
+mid_mod_Ttest.zs.temp <- mid_mod_Ttest.zs[,order(map_MG$SoilTemperature_to10cm)]
 
-heatmap.2(mid_mod.zs[Med_Mod_Cor[,3]<0.05,],col=hc(100), key=TRUE,symkey=FALSE, trace="none", density.info="none",dendrogram="both", labRow=row.names(mid_mod.zs[Med_Mod_Cor[,3]<0.05,]), margins=c(5,13), srtCol=90)
+mid_mod_TempCor <- mid_mod[Med_Mod_TempCor[,3]<0.05,]
+mid_mod_TempCor.zs <- decostand(mid_mod_TempCor, method="standardize", MARGIN=1)
+mid_mod_TempCor.zs.temp <- mid_mod_TempCor.zs[,order(map_MG$SoilTemperature_to10cm)]  
+  
+heatmap.2(mid_mod_Ttest.zs, col=hc(100), key=TRUE, symkey=FALSE, trace="none", density.info="none", dendrogram="both", labRow=FALSE, margins=c(5,13), srtCol=90)
 
-heatmap.2(mid_mod.zs.temp[Med_Mod_Cor[,3]<0.05,],col=hc(100),scale="row",key=TRUE,symkey=FALSE, Colv = FALSE, main="Temp Correlated Modules", trace="none", density.info="none",dendrogram="row", labRow=row.names(mid_mod.zs.temp[Med_Mod_Cor[,3]<0.05,]), margins=c(5,13), srtCol=90)
+heatmap.2(mid_mod_Ttest.zs.temp, col=hc(100), key=TRUE, symkey=FALSE, trace="none", density.info="none", dendrogram="row", Colv= FALSE, labRow=FALSE, margins=c(5,13), srtCol=90, main ="T-test Significant Modules")
+
+heatmap.2(mid_mod_TempCor.zs, col=hc(100), key=TRUE, symkey=FALSE, trace="none", density.info="none", dendrogram="both", labRow=FALSE, margins=c(5,13), srtCol=90)
+
+heatmap.2(mid_mod_TempCor.zs.temp, col=hc(100), key=TRUE, symkey=FALSE, trace="none", density.info="none", dendrogram="row", labRow=FALSE, margins=c(5,13), srtCol=90, main ="Temperature Correlated Modules")
 
 
+
+### Area for Trial Code etc. 
 install.packages("pcvlust")
 library(pvclust)
 
@@ -192,30 +222,9 @@ plot(result)
 pvrect(result, alpha=0.6)
 
 
-library(ggplot2)
-install.packages("devtools")
-devtools::install_github("hrbrmstr/ggalt")
-library(ggalt)
-library(scales)
-ggdata <- cbind(row.names(Med_Mod_Cor), Med_Mod_Cor[,1])
-colnames(ggdata) <- c("Module", "T_Statistic")
-ggdata <- as.data.frame(ggdata)
 
-ggdata$Module <- unlist(ggdata$Module)
-ggdata$T_Statistic <- unlist(ggdata$T_Statistic)
 
-ggdata_sig <- ggdata[Med_Mod_Cor[,3]<0.05,]
 
-gg <- ggplot(data=ggdata_sig, aes(x=Module, y=T_Statistic))+
-  geom_bar(width=1, stat="identity")+scale_y_continuous(expand = c(0,0)) + coord_flip() 
-gg  
 
-summary_stats <- read.table("../JGI_Metagenomes/JGI_MG_Summary_Stats.txt", sep="\t", stringsAsFactors = FALSE, row.names=1, header=TRUE) 
 
-### PERMANOVA based on the Module level aggregation Median values
-library(vegan)
-Mod.d <- vegdist(t(mid_mod),method="bray")
-Class <- rep("Red", 12)
-Class[map_MG$Classification!="FireAffected"] <- "Green"
-a=adonis(Mod.d~Class, distance=TRUE, permutations=1000)
-a
+
