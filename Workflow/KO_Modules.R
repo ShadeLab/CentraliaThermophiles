@@ -201,15 +201,28 @@ mid_mod_Ttest.zs.temp <- mid_mod_Ttest.zs[,order(map_MG$SoilTemperature_to10cm)]
 mid_mod_TempCor <- mid_mod[Med_Mod_TempCor[,3]<0.05,]
 mid_mod_TempCor.zs <- decostand(mid_mod_TempCor, method="standardize", MARGIN=1)
 mid_mod_TempCor.zs.temp <- mid_mod_TempCor.zs[,order(map_MG$SoilTemperature_to10cm)]  
-  
-heatmap.2(mid_mod_Ttest.zs, col=hc(100), key=TRUE, symkey=FALSE, trace="none", density.info="none", dendrogram="both", labRow=FALSE, margins=c(5,13), srtCol=90)
 
-heatmap.2(mid_mod_Ttest.zs.temp, col=hc(100), key=TRUE, symkey=FALSE, trace="none", density.info="none", dendrogram="row", Colv= FALSE, labRow=FALSE, margins=c(5,13), srtCol=90, main ="T-test Significant Modules")
+setEPS()
 
-heatmap.2(mid_mod_TempCor.zs, col=hc(100), key=TRUE, symkey=FALSE, trace="none", density.info="none", dendrogram="both", labRow=FALSE, margins=c(5,13), srtCol=90)
+postscript("../Figures/Heatmap_Ttest.eps", width = 5, height=5, pointsize=8,paper="special")
+fig10 <- heatmap.2(mid_mod_Ttest.zs, col=hc(100), key=TRUE, symkey=FALSE, trace="none", density.info="none", dendrogram="both", labRow=FALSE, margins=c(5,13), srtCol=90)
 
-heatmap.2(mid_mod_TempCor.zs.temp, col=hc(100), key=TRUE, symkey=FALSE, trace="none", density.info="none", dendrogram="row", labRow=FALSE, margins=c(5,13), srtCol=90, main ="Temperature Correlated Modules")
+dev.off()
 
+setEPS()
+postscript("../Figures/Heatmap_Ttest_TempOrdered.eps", width = 5, height=5, pointsize=8,paper="special")
+figure11 <- heatmap.2(mid_mod_Ttest.zs.temp, col=hc(100), key=TRUE, symkey=FALSE, trace="none", density.info="none", dendrogram="row", Colv= FALSE, labRow=FALSE, margins=c(5,13), srtCol=90, main ="T-test Significant Modules")
+dev.off()
+
+setEPS()
+postscript("../Figures/Heatmap_TempCor.eps", width = 5, height=5, pointsize=8,paper="special")
+Figure12 <- heatmap.2(mid_mod_TempCor.zs, col=hc(100), key=TRUE, symkey=FALSE, trace="none", density.info="none", dendrogram="both", labRow=FALSE, margins=c(5,13), srtCol=90)
+dev.off()
+
+setEPS()
+postscript("../Figures/Heatmap_TempCor_TempOrdered.eps", width = 5, height=5, pointsize=8,paper="special")
+Figure13 <-heatmap.2(mid_mod_TempCor.zs.temp, col=hc(100), key=TRUE, Colv=FALSE, symkey=FALSE, trace="none", density.info="none", dendrogram="row", labRow=FALSE, margins=c(5,13), srtCol=90, main ="Temperature Correlated Modules")
+dev.off()
 
 
 ### Area for Trial Code etc. 
@@ -223,7 +236,12 @@ pvrect(result, alpha=0.6)
 
 
 
+setEPS()
 
+postscript("../Figures/Fig1.eps", width = 5, height=5, pointsize=8,paper="special")
+par(mar=c(5,3,2,2)+0.1)
+fig1=vennDiagram(v)
+dev.off()
 
 
 
