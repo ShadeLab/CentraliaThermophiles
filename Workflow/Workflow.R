@@ -33,15 +33,20 @@ KO <- read.table("KO_minus2col_09-27-2016.tab.txt", sep="\t", row.names = 1, hea
 colnames(KO) <- map_MG$Sample
 
 rpoB <- KO["KO:K03043",] + KO["KO:K13798",] ### add the bacterial and archaeal copies together.
+# Remove KOs with zeroes across the entire dataset
+KO <- KO[rowSums(KO)>0,]
+
 #Relativze to rpoB
 KO.rpob <- NULL
 for (i in 1:nrow(KO)){
   KO.rpob <- rbind(KO.rpob, KO[i,]/rpoB)
 }
 
+row.names(KO.rpob) <- sub("KO:", "", row.names(KO.rpob))
+
 ### Venn Analysis 16S 
-source("http://www.bioconductor.org/biocLite.R")
-biocLite("limma")
+#source("http://www.bioconductor.org/biocLite.R")
+#biocLite("limma")
 library("limma")
 
 fireclass=map[,"Classification"]
@@ -180,7 +185,18 @@ Combined[,4]<-c(rep("A",42),rep("B",42),rep("C",28))
 colnames(Combined) <- c("Phylum", "Proportion", "Category", "Text")
 Combined$Category_f <- factor(Combined$Text, levels=c("A","B","C"))
 
-p2 <- ggplot(data=Combined, aes(x=Phylum, y=Proportion, fill=Phylum)) + geom_bar(stat="identity",aes(x=Phylum,y=Proportion)) + facet_wrap(~Category_f, nrow=3,) + theme(strip.background = element_blank(), strip.text.x = element_blank(),axis.text.x = element_text(angle=90, hjust=1, vjust=.5,  face="bold", lineheight = rel(2), size=rel(1.2)), axis.title.x=element_text(vjust=-1), strip.text.x=element_text(size=rel(2))) + guides(fill=FALSE)
+Combined_Abundant <- Combined[Combined$Proportion>0.01,]
+
+Combined_Rare <- Combined[Combined$Proportion<0.01,]
+
+pa <- ggplot(data=Combined_Abundant, aes(x=Phylum, y=Proportion)) + geom_bar(stat="identity", aes(x=Phylum,y=Proportion)) + facet_wrap(~Category_f, nrow=3) + theme(strip.background = element_blank(), axis.text.x = element_text(angle=60, hjust=1, vjust=1, lineheight = rel(2), size=rel(1.2)), axis.title.x= element_text(vjust=1),strip.text.x=element_text(size=rel(2))) + guides(fill=FALSE)
+pa
+
+pr <- ggplot(data=Combined_Rare, aes(x=Phylum, y=Proportion)) + geom_bar(stat="identity", aes(x=Phylum,y=Proportion)) + facet_wrap(~Category_f, nrow=3) + theme(strip.background = element_blank(), axis.text.x = element_text(angle=60, hjust=1, vjust=1, lineheight = rel(2), size=rel(1)), axis.title.x= element_text(vjust=1),strip.text.x=element_text(size=rel(2))) + guides(fill=FALSE)
+pr
+
+
+p2 <- ggplot(data=Combined, aes(x=Phylum, y=Proportion, fill=Phylum)) + geom_bar(stat="identity",aes(x=Phylum,y=Proportion)) + facet_wrap(~Category_f, nrow=3,) + theme(strip.background = element_blank(),axis.text.x = element_text(angle=90, hjust=1, vjust=.5,  face="bold", lineheight = rel(2), size=rel(1.2)), axis.title.x=element_text(vjust=-1), strip.text.x=element_text(size=rel(2))) + guides(fill=FALSE)
 p2
 ggsave("../Figures/Fig3.eps", width=200, units="mm")
 
@@ -235,382 +251,452 @@ dev.off()
 ### End 16S Analysis
 
 
-### PCoA Relativized to RPOB WIP
+### KEGG Module Analysis
+Modules <- read.table("kmodlist47982_23-nov-2016.txt", sep="\t", header=TRUE, row.names=1, stringsAsFactors = FALSE)
+
+MO_Per_M <- rep(0,nrow(Modules))
+for (i in 1:nrow(Modules)){
+  MO_Per_M[i] <- str_count(Modules$Definition[i],"M")
+}
+
+Modules_w_Modules <- Modules[MO_Per_M>0,]
+
+Dictionary <- vector(mode="list", length=nrow(Modules))
+names(Dictionary) <- row.names(Modules)
+
+Dictionary[[1]]
+grep(row.names(KO.rpob)[10], Modules$Definition)
+### For Some Module definitions, they have other modules in them, this is formating those definitions so that there are only K0 and no M0's in the Definition. As a side note these are all "Signature" module types
+#Acetogen
+Modules["M00618",3] <- paste(c(Modules["M00377",3],Modules["M00579",3]), collapse=" ")
+#Anoxygenic photosynthesis in green nonsulfur bacteria
+Modules["M00613",3] <- paste(c(Modules["M00597",3],Modules["M00376",3]), collapse=" ")
+#Anoxygenic photosynthesis in green sulfur bacteria
+Modules["M00614",3] <- paste(c(Modules["M00598",3],Modules["M00173",3]), collapse=" ")
+#Anoxygenic photosynthesis in purple bacteria
+Modules["M00612",3] <- paste(c(Modules["M00597",3],Modules["M00165",3]), collapse=" ")
+#Methanogen
+Modules["M00617",3] <- paste(c(Modules["M00567",3],Modules["M00357",3],Modules["M00356",3],Modules["M00563",3]), collapse=" ")
+#Nitrate assimilations
+Modules["M00615",3] <- paste(c(Modules["M00438",3],Modules["M00531",3]), collapse=" ")
+#Oxygenic photosynthesis in plants and cyanobacteria 
+Modules["M00611",3] <- paste(c(Modules["M00161",3],Modules["M00163",3],Modules["M00165",3]), collapse=" ")
+#Sulfate-sulfur assimilation
+Modules["M00616",3] <- paste(c(Modules["M00185",3],Modules["M00176",3]), collapse=" ")
+
+#Produces a list, each item in this list is a dataframe with the KO's in our dataset 
+for (KO in 1:nrow(KO.rpob)){
+  KO_M <- grep(row.names(KO.rpob)[KO], Modules$Definition)
+  if (length(KO_M)>0){
+    for (x in 1:length(KO_M)){
+      Dictionary[[KO_M[x]]] <- rbind(Dictionary[[KO_M[x]]], KO.rpob[KO,])
+    }
+  }
+}
+
+### Number of modules not represented by dataset
+count <- 0
+for (y in 1:length(Dictionary)){
+  if (data.class(Dictionary[[y]])=="NULL"){
+    count <- count + 1
+  }
+}
+
+#Counts the number of KOs in each module
+library(stringr)
+KO_Per_M <- rep(0, nrow(Modules))
+for (i in 1:nrow(Modules)){
+  KO_Per_M[i] <- str_count(Modules$Definition[i],"K")
+}
+# Counts number of KOs from each module that are present in our dataset
+KO_Per_M_Data <- rep(0, nrow(Modules))
+for (i in 1:nrow(Modules)){
+  if(data.class(Dictionary[[i]])!="NULL"){
+    KO_Per_M_Data[[i]] <- nrow(Dictionary[[i]])
+  }
+}
+
+Missing_KOs <- KO_Per_M - KO_Per_M_Data
+
+KO_Per_M_Present <- KO_Per_M[KO_Per_M_Data>0]
+KO_Per_M_Data_Present <- KO_Per_M_Data[KO_Per_M_Data>0]
+### Number of Modules that are less than 50% complete 
+sum(1*((KO_Per_M_Data_Present/KO_Per_M_Present)<0.5))
+
+### Adding zeroes for K0 missing in our data set from some modules (doesnt make a big difference, commenting it out because of this)
+#Dictionary_AddedZeroes <- Dictionary
+#for( i in 1:length(Missing_KOs)){
+ # if (Missing_KOs[i]>0){
+  #  Addition <- matrix(0,Missing_KOs[i],12)
+   # colnames(Addition) <- colnames(Dictionary_AddedZeroes[[i]])
+    #Dictionary_AddedZeroes[[i]] <- rbind(Dictionary_AddedZeroes[[i]],Addition)
+  #}
+#}
+### Number of incomplete modules 367 modules that are not 100% complete
+length(Missing_KOs[Missing_KOs>0])
+
+KO_Per_M_Data/KO_Per_M
+
+
+### Getting Rid of Modules that are not present at all in our data. 
+Dictionary_Subset <- Dictionary[lapply(Dictionary, data.class) == "data.frame"]
+#Dictionary_AZ_Subset <- Dictionary_AddedZeroes[lapply(Dictionary_AddedZeroes, data.class) == "data.frame"]
+Modules_Subset <- Modules[lapply(Dictionary,data.class) == "data.frame",]
+KO_Per_M_Subset <- KO_Per_M[lapply(Dictionary, data.class) == "data.frame"]
+KO_Per_M_Data_Subset <- KO_Per_M_Data[lapply(Dictionary, data.class) == "data.frame"]
+
+#Fraction of KOs from each module present in our dataset
+Module_Completeness <- KO_Per_M_Data_Subset/KO_Per_M_Subset
+
+### Figure out correlation coefficients? Just do t.tests? 
+# the real question is whether to use the worst, average, or best correlation/t.test result
+#Dummy Code
+#  for every module 
+#  for every KO in that module
+#    Calculate the correlation coefficient
+#    calculate t.test result
+#    write correlation coefficient and t. test results to an item in a list
+#  Calculate average and standard deviation of correlation and cor pvalue
+#  calculate average and standard deviation of t.test statistic and pvalue
+
+#Calculating correlation coefficient and T.test results for all KOs in all modules  
+Summary_Output <- NULL
+avg_mod <- NULL
+mid_mod <- NULL
+#mid_mod_az <- NULL
+#avg_mod_az <- NULL
+max_mod <- NULL
+min_mod <- NULL
+stdev_mod <- NULL
+for (m in 1:length(Dictionary_Subset)){
+  temp_data <- Dictionary_Subset[[m]]
+ # temp_data_az <- Dictionary_AZ_Subset[[m]]
+  K_out <- NULL
+  agg <- NULL
+  #agg_az <- NULL
+  ### This loop calculates the correlation coefficients and t test for each KO in a module. We've decided to go ahead and calculate these for the median values 
+  #for(k in 1:nrow(temp_data)){
+  # cor <- cor.test(as.numeric(temp_data[k,]), map_MG$SoilTemperature_to10cm) 
+  #test <- t.test(as.numeric(temp_data[k,map_MG$Class_Color=="red"], as.numeric(temp_data[k, map_MG$Class_Color!="red"])))
+  #K_out <- rbind(K_out, c(as.numeric(cor[1]), as.numeric(cor[3]), as.numeric(test[1]), as.numeric(test[3])))
+  #}
+  ### Calculates the AVG, Median, Min, Max, and STDEV for the KOs of a module in each given site.
+  for (s in 1:ncol(temp_data)){
+    avg <- mean(temp_data[,s])
+    mid <- median(temp_data[,s])
+    minimum <- min(temp_data[,s])
+    maximum <- max(temp_data[,s])
+    stdev <- sd(temp_data[,s])
+    agg <- cbind(agg, c(avg, mid, minimum, maximum, stdev))
+  }
+  #for (t in 1:ncol(temp_data_az)){
+   # avg_az <- mean(temp_data_az[,t])
+    #mid_az <- median(temp_data_az[,t])
+    #agg_az <- cbind(agg_az, c(avg_az, mid_az))
+#  }
+  #Summary_Output <- rbind(Summary_Output, c(nrow(K_out),apply(K_out, 2, mean), apply(K_out, 2, sd)))
+  avg_mod <- rbind(avg_mod, agg[1,])
+  mid_mod <- rbind(mid_mod, agg[2,])
+  min_mod <- rbind(min_mod, agg[3,])
+  max_mod <- rbind(max_mod, agg[4,])
+  stdev_mod <- rbind(stdev_mod, agg[5,])
+  #avg_mod_az <- rbind(avg_mod_az, agg_az[1,])
+ # mid_mod_az <- rbind(mid_mod_az, agg_az[2,])
+}
+
+###colnames(Summary_Output) <- c("Number KOs", "Average Pearsons", "Average Pearsons Pvalue", "Average T Statistic", "Average T P value", "SD Pearsons", "SD Pearsons Pvalue", "SD T Statistic", "SD T Pvalue") 
+colnames(avg_mod) <- map_MG$Sample
+colnames(mid_mod) <- map_MG$Sample
+colnames(stdev_mod) <- map_MG$Sample
+colnames(mid_mod)<- map_MG$Sample
+colnames(max_mod) <- map_MG$Sample
+#colnames(avg_mod_az) <- map_MG$Sample
+#colnames(mid_mod_az) <- map_MG$Sample
+
+#row.names(Summary_Output) <- names(Dictionary_Subset)  
+row.names(avg_mod) <- names(Dictionary_Subset)
+row.names(mid_mod) <- names(Dictionary_Subset)
+row.names(max_mod) <- names(Dictionary_Subset)
+row.names(min_mod) <- names(Dictionary_Subset)
+row.names(stdev_mod) <- names(Dictionary_Subset)
+#row.names(avg_mod_az) <- names(Dictionary_AZ_Subset)
+#row.names(mid_mod_az) <- names(Dictionary_AZ_Subset)
+
+###   ***Multivariate Analysis based on Modules, KO, and 16S*** 
+
+# Distance Matrix based on Weighted unifrac
+uf=read.table("weighted_unifrac_MASTER_OTU_hdf5_filteredfailedalignments_rdp_rmCM_collapse_even321000.txt", header=TRUE, row.names=1)
+uf=uf[order(row.names(uf)),order(colnames(uf))]
+# Subsetting to only the samples we have metagenomes for...
+uf_mg <- uf[c(1,3,4,5,6,7,10,12,14,15,16,17),c(1,3,4,5,6,7,10,12,14,15,16,17)]
+uf_mg.d <- as.dist(uf_mg)
+
+# Distance matrix based on Modules
+Mod.d <- vegdist(t(mid_mod),method="bray")
+Class <- rep("Red", 12)
+Class[map_MG$Classification!="FireAffected"] <- "Green"
+a=adonis(Mod.d~Class, distance=TRUE, permutations=1000)
+a
+
+b=betadisper(Mod.d, group=Class)
+TukeyHSD(b, which = "group", ordered = FALSE,conf.level = 0.95)
+
+# Distance Matrix based on KO
+KO.d <- vegdist(t(KO.rpob),method="bray")
+
+# Settin gup Classifications
+Class <- rep("Red", 12)
+Class[map_MG$Classification!="FireAffected"] <- "Green"
+
+#PERMANOVA For KO, Module, and UniFrac
+Module.a=adonis(Mod.d~Class, distance=TRUE, permutations=1000)
+Module.a # Significant 
+KO.a <- adonis(KO.d~Class, distance=TRUE, permutations = 1000)
+KO.a # Significant
+uf.a <- adonis(uf_mg.d~Class, distance=TRUE, permutations= 1000)
+uf.a # Significant
+
+
+# Beta Dispersion for KO, Module, and UniFrac
+Module.b=betadisper(Mod.d, group=Class)
+TukeyHSD(Module.b, which = "group", ordered = FALSE,conf.level = 0.95)
+
+KO.b=betadisper(KO.d, group=Class)
+TukeyHSD(KO.b, which = "group", ordered = FALSE,conf.level = 0.95)
+
+uf.b=betadisper(uf_mg.d, group=Class)
+TukeyHSD(uf.b, which = "group", ordered = FALSE,conf.level = 0.95)
+
+Module.pcoa <- cmdscale(Mod.d, eig=TRUE)
+KO.pcoa <- cmdscale(KO.d, eig=TRUE)
+uf.pcoa <- cmdscale(uf_mg.d, eig=TRUE)
+# Based on the help file for PROTEST it looks like it requires a PCoA to run the test, although maybe using a distance matrix can work as well (it just has # of dimensions== # of samples instead of # of PCoA axes)
+
+# Module VS KO
+M_v_K.mantel <- mantel(Mod.d, KO.d)
+M_v_K.protest <- protest(Module.pcoa, KO.pcoa)
+
+M_v_U.mantel <- mantel(Mod.d, uf_mg.d)
+M_v_U.protest <- protest(Module.pcoa,uf.pcoa)
+
+K_v_U.mantel <- mantel(KO.d, uf_mg.d)
+K_v_U.protest <- protest(KO.pcoa, uf.pcoa)
+# Protest and Mantel test reveal all three datasets resemble each other
+
+
+#pcoa_pro <- protest(Module.pcoa,uf.pcoa)
+#dist_pro <- protest(Mod.d, uf_mg.d)
+#summary(dist_pro)
+#summary(pcoa_pro)
+#plot(pcoa_pro)
+#plot(pcoa_pro, kind=1)
+#plot(dist_pro)
+
+
+
+### *** Module Temperature Correlations, T-Tests, and Heatmaps *** 
+median_Module_TempCorrelations <- apply(mid_mod, 1, function(x) cor.test(x, map_MG$SoilTemperature_to10cm))
+
+#med_mod_az_TC <- apply(mid_mod_az, 1, function(x) cor.test(x, map_MG$SoilTemperature_to10cm))
+
+# T-Test for each Module
+median_Module_t.test <- apply(mid_mod, 1, function(x) t.test(x[map_MG$Classification=="FireAffected"], x[map_MG$Classification!="FireAffected"]))
+
+#med_mod_az_t.test <- apply(mid_mod_az, 1, function(x) t.test(x[map_MG$Classification=="FireAffected"], x[map_MG$Classification!="FireAffected"]))
+
+### 229 Modules significantly correlated with temperature
+Med_Mod_TempCor <- NULL
+for (i in 1:607){
+  Med_Mod_TempCor <- rbind (Med_Mod_TempCor, c(median_Module_TempCorrelations[[i]][4],median_Module_TempCorrelations[[i]][2],median_Module_TempCorrelations[[i]][3]))
+}
+Med_Mod_TempCor <- as.data.frame(Med_Mod_TempCor)
+row.names(Med_Mod_TempCor) <- names(Dictionary_Subset)
+Med_Mod_TempCor[,1] <- unlist(Med_Mod_TempCor[,1])
+Med_Mod_TempCor[,2] <- unlist(Med_Mod_TempCor[,2])
+Med_Mod_TempCor[,3] <- unlist(Med_Mod_TempCor[,3])
+Med_Mod_TempCor <- cbind(Med_Mod_TempCor, KO_Per_M_Data_Present/KO_Per_M_Present)
+
+### 
+#Med_Mod_AZ_TempCor <- NULL
+#for (i in 1:607){
+#  Med_Mod_AZ_TempCor <- rbind(Med_Mod_AZ_TempCor, c(med_mod_az_TC[[i]][4],med_mod_az_TC[[i]][2],med_mod_az_TC[[i]][3] ))
+#}
+#Med_Mod_AZ_TempCor <- as.data.frame(Med_Mod_AZ_TempCor)
+#row.names(Med_Mod_AZ_TempCor) <- names(Dictionary_Subset)
+#Med_Mod_AZ_TempCor[,1] <- unlist(Med_Mod_AZ_TempCor[,1])
+#Med_Mod_AZ_TempCor[,2] <- unlist(Med_Mod_AZ_TempCor[,2])
+#Med_Mod_AZ_TempCor[,3] <- unlist(Med_Mod_AZ_TempCor[,3])
+#Med_Mod_AZ_TempCor <- cbind(Med_Mod_AZ_TempCor, KO_Per_M_Data_Present/KO_Per_M_Present)
+### Counting number of significant modules (188 significant modules out of 607 Modules)
+#sum(1*grepl("TRUE",Med_Mod_AZ_TempCor$p.value<0.05))
+
+### Removing Modules less than 50% completeness across dataset (leaves 538 Modules out of 607 Modules, removing 69 modules in total)
+#Med_Mod_AZ_TempCor <- Med_Mod_AZ_TempCor[Med_Mod_AZ_TempCor$`KO_Per_M_Data_Present/KO_Per_M_Present`>=0.5,]
+
+# Removing Modules for which Temperature correlation could not be calculated
+#Med_Mod_AZ_TempCor <- Med_Mod_AZ_TempCor[complete.cases(Med_Mod_AZ_TempCor),]
+
+### Counting significant Modules (188 Modules with significant temperature correlations) 
+#sum(1*(Med_Mod_AZ_TempCor$p.value<0.05))
+
+#Sig_Temp_Cor_Zeroes <- Med_Mod_AZ_TempCor[Med_Mod_AZ_TempCor$p.value <0.05,]
+
+### Finding Modules that are significant if not adding zeroes that become insignifcant when adding zeroes. 
+#sum(1*(row.names(Med_Mod_TempCor[Med_Mod_TempCor$p.value<0.05,]) %nin% row.names(Med_Mod_AZ_TempCor[Med_Mod_AZ_TempCor$p.value<0.05,])))
+
+Sig_Temp_Cor <- Med_Mod_TempCor[Med_Mod_TempCor$p.value<0.05,]
+#Non_Overlapping <- Sig_Temp_Cor[row.names(Med_Mod_TempCor[Med_Mod_TempCor$p.value<0.05,]) %nin% row.names(Med_Mod_AZ_TempCor[Med_Mod_AZ_TempCor$p.value<0.05,]),]
+#hist(Non_Overlapping$`KO_Per_M_Data_Present/KO_Per_M_Present`)
+# 17 Modules are signifcant w/o zeroes because they are less than 50% complete
+#sum(1*(Non_Overlapping$`KO_Per_M_Data_Present/KO_Per_M_Present`<0.5))
+# 33 Modules are signifcant w/o zeroes but insignifant with zeroes despite being >50% complete
+#sum(1*(Non_Overlapping$`KO_Per_M_Data_Present/KO_Per_M_Present`>=0.5))
+#Weirdos <- row.names(Non_Overlapping[Non_Overlapping$`KO_Per_M_Data_Present/KO_Per_M_Present`>=0.5,])
+#mid_mod[Weirdos,]
+#Modules[Weirdos,1:2]
+
+# Finding Modules that become significant w/zeroes that are not significant w/o zeroes. 
+#Non_Overlapping_Zeroes <- Sig_Temp_Cor_Zeroes[row.names(Sig_Temp_Cor_Zeroes)%nin%row.names(Sig_Temp_Cor),]
+#Modules[row.names(Non_Overlapping_Zeroes),1:2]
+
+Med_Mod_Ttest <- NULL
+for (i in 1:607){
+  Med_Mod_Ttest <- rbind (Med_Mod_Ttest, c(median_Module_t.test[[i]][1],median_Module_t.test[[i]][2],median_Module_t.test[[i]][3]))
+}
+Med_Mod_Ttest <- as.data.frame(Med_Mod_Ttest)
+row.names(Med_Mod_Ttest) <- names(Dictionary_Subset)
+Med_Mod_Ttest[,1] <- unlist(Med_Mod_Ttest[,1])
+Med_Mod_Ttest[,2] <- unlist(Med_Mod_Ttest[,2])
+Med_Mod_Ttest[,3] <- unlist(Med_Mod_Ttest[,3])
+
+#Med_Mod_AZ_Ttest <- NULL
+#for(i in 1:607){
+ # Med_Mod_AZ_Ttest <- rbind(Med_Mod_AZ_Ttest, c(med_mod_az_t.test[[i]][1],med_mod_az_t.test[[i]][2],med_mod_az_t.test[[i]][3]))
+#}
+#Med_Mod_AZ_Ttest <- as.data.frame(Med_Mod_AZ_Ttest)
+#row.names(Med_Mod_AZ_Ttest) <- names(Dictionary_Subset)
+#Med_Mod_AZ_Ttest[,1] <- unlist(Med_Mod_AZ_Ttest[,1])
+#Med_Mod_AZ_Ttest[,2] <- unlist(Med_Mod_AZ_Ttest[,2])
+#Med_Mod_AZ_Ttest[,3] <- unlist(Med_Mod_AZ_Ttest[,3])
+
+Sig_Ttest_Modules <- Modules_Subset[Med_Mod_Ttest[,3]<0.05,]
+Sig_TempCor_Modules <- Modules_Subset[Med_Mod_TempCor[,3]<0.05,]
+
+Combined_Sig_Module_Names <- unique(c(row.names(Sig_Ttest_Modules), row.names(Sig_TempCor_Modules)))
+
+Combined_Sig_Modules <- mid_mod[Combined_Sig_Module_Names,]
+
+
+TempCor_Sig_vector <-1*(Combined_Sig_Module_Names%nin%row.names(Sig_TempCor_Modules)=="FALSE")
+Ttest_Sig_vector <- 2*(Combined_Sig_Module_Names%nin%row.names(Sig_Ttest_Modules)=="FALSE")
+
+Sig_Code <- TempCor_Sig_vector + Ttest_Sig_vector
+### Blue == T Test   Red= Temp Cor   Green == Both
+Classification_Test <- rep("Blue", nrow(Combined_Sig_Modules)) 
+Classification_Test[Sig_Code==3] <- "Green"
+Classification_Test[Sig_Code==2] <- "Blue"
+Classification_Test[Sig_Code==1] <- "Red"
+### Heat map of Modules that are either significant based in T-Test or Temperature Correlation
+library(colorRamps)
+library(gplots)
+library(vegan)
+hc=colorRampPalette(c("#91bfdb","white","#fc8d59"), interpolate="linear")
+
+Combined_Sig_Modules.zs <- decostand(Combined_Sig_Modules, method="standardize", MARGIN=1)
+
+setEPS()
+
+png("../Figures/Heatmap_Combined.png", width = 1000, height=4000, pointsize=8)
+fig10 <- heatmap.2(Combined_Sig_Modules.zs, col=hc(100), key=FALSE, symkey=FALSE, trace="none", density.info="none", dendrogram="row",cexRow = 2, labRow=FALSE, margins=c(5,13), srtCol=90, colRow = Classification_Test, RowSideColors=Classification_Test, lhei = c(1,100))
+dev.off()
+
+# Investigating the Clusters
+Temp_Sensitive <- c("M00591","M00644", "M00339","M00480","M00474","M00298","M00251","M00090","M00235","M00204","M00722","M00216","M00230","M00607","M00662","M00446","M00040","M00208","M00042","M00641","M00672","M00627","M00509","M00639","M00136","M00025","M00328","M00593","M00631")
+Modules[Temp_Sensitive,]
+C1 <- c("M00597", "M00435","M00011","M00320","M00638","M00249","M00153","M00163","M00609","M00161","M00145","M00346","M00061","M00580","M00345","M00172","M00171","M00027")
+Modules[C1,]
+
+C2 <- c("M00479","M00116","M00196","M00343","M00342","M00309","M00482","M00113","M00256","M00243","M00283","M00550","M00151","M00540","M00416","M00548","M00604","M00623","M00203","M00219","M00001","M00167","M00033","M00081","M00162","M00545","M00569","M00436","M00510","M00010","M00176","M00165","M00612")
+Modules[C2,]
+
+C3 <- c("M00668","M00080","M00543","M00091","M00331","M00613","M00099","M00186","M00250","M00190","M00602","M00544","M00135")
+Modules[C3,]
+
+C4 <- c("M00400","M00403","M00423","M00413","M00179","M00184","M00391","M00390","M00288","M00177","M00425","M00181","M00180","M00182","M00529","M00120","M00095","M00344","M00530","M00367","M00365","M00166","M00374", "M00032","M00401","M00072","M00264","M00261","M00633","M00596","M00763","M00031","M00159","M00582","M00338")
+Modules[C4,]
+
+C5 <- c("M00013", "M00717","M00442","M00290","M00473")
+Modules[C5,]
+
+C6<- c("M00168","M00740", "M00368","M00018","M00012","M00052","M00178","M00023","M00019","M00570","M00140","M00222","M00360","M00359","M00378","M00237","M00053","M00016","M00114","M00254","M00141","M00364","M00003","M00005","M00045","M00239","M00207","M00170","M00489","M00490","M00611", "M00392","M00267","M00275","M00507","M00552","M00614","M00051","M00366","M00007","M00121","M00002", "M00149", "M00021", "M00029")
+Modules[C6,]
+
+C7 <- c("M00133","M00620","M00616","M00484","M00087","M00088","M00375")
+Modules[C7,]
+
+C8 <- c("M00189","M00471","M00155","M00376","M00483","M00434","M00236","M00193","M00028","M00036","M00549","M00506","M00260","M00454","M00505","M00246","M00245","M00093","M00060","M00572")
+Modules[C8,]
+
+C9 <- c("M00008","M00066","M00333","M00308","M00452","M00554","M00632","M00173","M00535","M00432","M00082","M00006","M00361", "M00004", "M00335")
+Modules[C9,]
+
+C10 <- c("M00125","M00022","M00049","M00048","M00026","M00157","M00336","M00188","M00096","M00127","M00131","M00209","M00526","M00525","M00527","M00531","M00117","M00064","M00009","M00259","M00144","M00729", "M00115", "M00183")
+Modules[C10,]
+
+C11 <- c("M00129","M00394","M00122","M00119","M00362","M00670","M00669")
+Modules[C11,]
+
+C12 <- c("M00567","M00465","M00647","M00725","M00242","M00358","M00458","M00481")
+Modules[C12,]
+
+C13<- c("M00357","M00077","M00450","M00646","M00035","M00460")
+Modules[C13,]
+
+C14 <- c("M00124","M00050","M00565","M00210","M00240","M00519","M00741","M00123","M00577","M00573")
+Modules[C14,]
+
+### PCoA's for Module, Ortholog, and UF distacnes
 library(calibrate)
 class <- rep("black", nrow(map_MG))
 class[map_MG$Classification=="Recovered"]='yellow'
 class[map_MG$Classification=="FireAffected"]='red'
 class[map_MG$Classification=="Reference"]='green'
 
-# KEGG Orthology distanc matrix and PCoA
-K.dist <- vegdist(t(KO.rpob), method="bray" )
-K.dist
-k.pcoa <-cmdscale(K.dist, eig=TRUE)
+# % variance explained on 1st two axes of Module, KO, and UF PCoA
+M_ax1.v <- Module.pcoa$eig[1]/sum(Module.pcoa$eig)
+M_ax2.v <- Module.pcoa$eig[2]/sum(Module.pcoa$eig)
 
-ax1.v=k.pcoa$eig[1]/sum(k.pcoa$eig)
-ax2.v=k.pcoa$eig[2]/sum(k.pcoa$eig)
-# Read in Weighted UniFrac Distance MAtrix and Calculate PCoA
-uf=read.table("weighted_unifrac_MASTER_OTU_hdf5_filteredfailedalignments_rdp_rmCM_collapse_even321000.txt", header=TRUE, row.names=1)
+KO_ax1.v=KO.pcoa$eig[1]/sum(KO.pcoa$eig)
+KO_ax2.v=KO.pcoa$eig[2]/sum(KO.pcoa$eig)
 
-#sort by rows, columns (so they are in the consecutive order)
-uf=uf[order(row.names(uf)),order(colnames(uf))]
-uf.d=as.dist(uf)
+uf_ax1.v=uf.pcoa$eig[1]/sum(uf.pcoa$eig)
+uf_ax2.v=uf.pcoa$eig[2]/sum(uf.pcoa$eig)
 
-uf.pcoa=cmdscale(uf.d, eig=TRUE)
+
 #calculate percent variance explained, then add to plot
 ax1.v.uf=uf.pcoa$eig[1]/sum(uf.pcoa$eig)
 ax2.v.uf=uf.pcoa$eig[2]/sum(uf.pcoa$eig)
 
-
-class.uf <- rep("black", nrow(map))
-class.uf[map$Classification=="Recovered"]='yellow'
-class.uf[map$Classification=="FireAffected"]='red'
-class.uf[map$Classification=="Reference"]='green'
-?plot
-dev.off()
-setEPS()
-postscript("../Figures/Figure5.eps", width = 8, height=4, pointsize=8,paper="special")
-par(mfrow=c(1,2))
-plot(k.pcoa$points[,1], k.pcoa$points[,2],cex=1.5, bg=class, pch=21, main= "rpoB Relativized Bray Curtis KEGG PCoA", xlab= paste("PCoA1: ",100*round(ax1.v,3),"% var. explained",sep=""), ylab= paste("PCoA2: ",100* round(ax2.v,3),"% var. explained",sep=""))
-textxy(X=k.pcoa$points[,1], Y=k.pcoa$points[,2],labs=map_MG$Sample, cex=1)
-
 env=map_MG[,c("SoilTemperature_to10cm", "NO3N_ppm", "pH", "K_ppm", "Mg_ppm", "OrganicMatter_500", "NH4N_ppm", "SulfateSulfur_ppm", "Ca_ppm", "Fe_ppm", "As_ppm", "P_ppm", "SoilMoisture_Per","Fire_history")]
-envEF=envfit(k.pcoa, env)
-plot(envEF, p.max=0.05, col="black")
 
-plot(uf.pcoa$points[,1],uf.pcoa$points[,2] ,cex=1.5,pch=21,bg=class.uf,main="Weighted UniFrac PCoA",xlab= paste("PCoA1: ",100*round(ax1.v.uf,3),"% var. explained",sep=""), ylab= paste("PCoA2: ",100* round(ax2.v.uf,3),"% var. explained",sep=""))
+dev.off()
+setEPS()
+postscript("../Figures/Figure5.eps", width = 12, height=4, pointsize=8,paper="special")
+par(mfrow=c(1,3))
+plot(Module.pcoa$points[,1], Module.pcoa$points[,2],cex=1.5, bg=class, pch=21, main= "rpoB Relativized Bray Curtis KEGG Module PCoA", xlab= paste("PCoA1: ",100*round(M_ax1.v,3),"% var. explained",sep=""), ylab= paste("PCoA2: ",100* round(M_ax2.v,3),"% var. explained",sep=""))
+textxy(X=Module.pcoa$points[,1],Y=Module.pcoa$points[,2], lab=map_MG$Sample,cex=1)
+M_env<- envfit(Module.pcoa,env)
+plot(M_env, p.max=0.05, col="black")
+
+plot(KO.pcoa$points[,1], KO.pcoa$points[,2],cex=1.5, bg=class, pch=21, main= "rpoB Relativized Bray Curtis KEGG Ortholog PCoA", xlab= paste("PCoA1: ",100*round(KO_ax1.v,3),"% var. explained",sep=""), ylab= paste("PCoA2: ",100* round(KO_ax2.v,3),"% var. explained",sep=""))
+textxy(X=KO.pcoa$points[,1], Y=KO.pcoa$points[,2],labs=map_MG$Sample, cex=1)
+
+KO_env=envfit(KO.pcoa, env)
+plot(KO_env, p.max=0.05, col="black")
+
+plot(uf.pcoa$points[,1],uf.pcoa$points[,2] ,cex=1.5,pch=21,bg=class,main="Weighted UniFrac PCoA",xlab= paste("PCoA1: ",100*round(uf_ax1.v,3),"% var. explained",sep=""), ylab= paste("PCoA2: ",100* round(uf_ax2.v,3),"% var. explained",sep=""))
 #textxy is from the calibrate library
-textxy(X=uf.pcoa$points[,1], Y=uf.pcoa$points[,2],labs=map$Sample, cex=1)
-legend('bottomleft',c('Fire Affected','Recovered','Reference'),pch=21,pt.bg=c("red", "yellow", "green"),lty=0)
-
-#Add env vectors to plot that are significant p < 0.10
-env.uf=map[,c("SoilTemperature_to10cm", "NO3N_ppm", "pH", "K_ppm", "Mg_ppm", "OrganicMatter_500", "NH4N_ppm", "SulfateSulfur_ppm", "Ca_ppm", "Fe_ppm", "As_ppm", "P_ppm", "SoilMoisture_Per","Fire_history")]
-envEF.uf=envfit(uf.pcoa, env.uf)
-plot(envEF.uf, p.max=0.05, col="black")
+textxy(X=uf.pcoa$points[,1], Y=uf.pcoa$points[,2],labs=map_MG$Sample, cex=1)
+uf_env <- envfit(uf.pcoa, env)
+plot(uf_env, p.max=0.05, col="black")
 dev.off()
-
-Class2=sub("green", "yellow", class)
-### rpoB relativized hypothesis testing
-a=adonis(K.dist~Class2, distance=TRUE, permutations=1000)
-a
-### rpoB relativized
-b=betadisper(K.dist, group=Class2)
-TukeyHSD(b, which = "group", ordered = FALSE,conf.level = 0.95)
-
-
-### Using Coefficient of Variation for KEGG Orthologs to identify "responding" genes.
-# Reference for single copy genes http://www.nature.com/articles/srep14840
-KO <- as.matrix(KO)
-KO.rpob <- as.matrix(KO.rpob)
-
-KO_NZ <- KO[rowSums(KO)>0,]
-KO.rpob_NZ <- KO.rpob[rowSums(KO.rpob)>0,]
-
-CV<- NULL
-for(i in 1:nrow(KO_NZ)){
-  CV <- c(CV, sd(KO_NZ[i,])/mean(KO_NZ[i,]))
-}
-
-plot(CV)
-
-CV.rpob <- NULL
-for(i in 1:nrow(KO.rpob_NZ)){
-  CV.rpob <- c(CV.rpob, sd(KO.rpob_NZ[i,])/mean(KO.rpob_NZ[i,]))
-}
-
-hist(CV)
-hist(CV.rpob)
-
-#Single Copy Genes
-SCG <- read.table("Single_Copy_Genes.txt", sep="\t", header=TRUE, stringsAsFactors = FALSE)
-
-SCG_CV <- NULL 
-for(i in 1:nrow(SCG)){
-  SCG_CV <- c(SCG_CV,CV[grep(SCG[i,3], rownames(KO_NZ))])
-}
-SCG <- cbind(SCG, SCG_CV)
-
-SCG_CV.rpob <- NULL 
-for(i in 1:nrow(SCG)){
-  SCG_CV.rpob <- c(SCG_CV.rpob,CV.rpob[grep(SCG[i,3], rownames(KO.rpob_NZ))])
-}
-SCG <- cbind(SCG, SCG_CV.rpob)
-
-SCG_Order <- NULL
-for(i in 1:nrow(SCG)){
-  SCG_Order <- c(SCG_Order,grep(SCG$KO[i],rownames(KO_NZ)))
-}
-SCG_BaKO<- SCG[SCG$Class=="bacteria",]
-SCG_BoKO <- SCG[SCG$Class=="both",]
-SCG_ArKO<- SCG[SCG$Class=="archaea",]
-
-SCG_Bacteria <- NULL
-for(i in 1:nrow(SCG_BaKO)){
-  SCG_Bacteria <- c(SCG_Bacteria, grep(SCG_BaKO$KO[i],rownames(KO_NZ)))
-}
-
-SCG_Both <- NULL
-for(i in 1:nrow(SCG_BoKO)){
-  SCG_Both <- c(SCG_Both, grep(SCG_BoKO$KO[i],rownames(KO_NZ)))
-}
-
-SCG_Archaea <- NULL
-for(i in 1:nrow(SCG_ArKO)){
-  SCG_Archaea <- c(SCG_Archaea, grep(SCG_ArKO$KO[i],rownames(KO_NZ)))
-}
-
-Weights <- rep(.5, length(CV))
-Weights[SCG_Order]=5
-colors <- rep('black',length(CV))
-colors[SCG_Bacteria]="blue"
-colors[SCG_Both]="green"
-colors[SCG_Archaea]="red"
-dev.off()
-setEPS()
-postscript("../Figures/Figure6.eps", width = 8, height=3, pointsize=8,paper="special")
-par(mfrow=c(1,2))
-plot(CV, col=colors,lwd=Weights)
-hist(CV, prob=TRUE)
-lines(density(CV))
-abline(v = mean(SCG_CV[SCG$Class=="bacteria"]), col = "blue", lwd = 2)
-abline(v= mean(SCG_CV[SCG$Class=="archaea"]), col="red", lwd=2)
-abline(v= mean(SCG_CV[SCG$Class=="both"]), col="green", lwd=2)
-dev.off()
-
-setEPS()
-postscript("../Figures/Figure6.eps", width = 8, height=3, pointsize=8,paper="special")
-hist(CV.rpob, prob=TRUE)
-lines(density(CV.rpob))
-abline(v = mean(SCG_CV.rpob[SCG$Class=="bacteria"]), col = "blue", lwd = 2)
-abline(v= mean(SCG_CV.rpob[SCG$Class=="archaea"]), col="red", lwd=2)
-abline(v= mean(SCG_CV.rpob[SCG$Class=="both"]), col="green", lwd=2)
-dev.off()
-# Find KOs with CV greater than archaeal Single Copy Housekeeping Genes
-High_CVA <- KO_NZ[CV.rpob>mean(SCG_CV.rpob[SCG$Class=="archaea"]),]
-High_CVB <- KO_NZ[CV.rpob>mean(SCG_CV.rpob[SCG$Class=="bacteria"]),]
-row.names(KO_NZ) <- sub("KO:", "", row.names(KO_NZ))
-
-row.names(High_CVA) <- sub("KO:", "", row.names(High_CVA))
-write.table(x=row.names(High_CVA), file="High_CVA_KO.txt", sep="\t")
-
-row.names(High_CVB) <- sub("KO:", "", row.names(High_CVB))
-write.table(x=row.names(High_CVB), file="High_CVB_KO.txt", sep="\t")
-
-#KO Responses (using z-score across samples to look for similar patterns) CV greater than Archaeal Single Copy Genes
-
-High_CVA.zs <- decostand(High_CVA, method="standardize", MARGIN=1)
-High_CVA.zs <- as.matrix(High_CVA.zs)
-
-#Create Dendrogram
-HCVA_Den <- hclust(dist(High_CVA.zs))
-
-#create color pallette; see: http://colorbrewer2.org/ 
-hc=colorRampPalette(c("#91bfdb","white","#fc8d59"), interpolate="linear")
-
-Figure7A<-heatmap.2(High_CVA.zs,col=hc(100),scale="row",key=TRUE,symkey=FALSE,main="Archael Cutoff", trace="none", density.info="none",dendrogram="both", labRow=row.names(High_CVA.zs), colCol=c(class), margins=c(5,13), srtCol=90)
-
-# Ordering Columns by temperature
-High_CVA.zs.temp <- High_CVA.zs[,order(map_MG$SoilTemperature_to10cm)]
-
-
-Figure7B<-heatmap.2(High_CVA.zs.temp,col=hc(100),scale="row",key=TRUE,symkey=FALSE, Colv= FALSE, trace="none", density.info="none",dendrogram="row", main="Archael Cutoff Ordered by Temp", labRow=row.names(High_CVA.zs), colCol=c("green","yellow","yellow","yellow","yellow","yellow","red","red","red","red","red","red"), margins=c(5,13), srtCol=90)
-
-
-#KO Responses (using z-score across samples to look for similar patterns) CV greater than Bacterial Single Copy Genes
-
-High_CVB.zs <- decostand(High_CVB, method="standardize", MARGIN=1)
-High_CVB.zs <- as.matrix(High_CVB.zs)
-
-#Creat Dendrogram
-HCVB_Den <- hclust(dist(High_CVB.zs))
-
-#create color pallette; see: http://colorbrewer2.org/ 
-hc=colorRampPalette(c("#91bfdb","white","#fc8d59"), interpolate="linear")
-
-Figure8A<-heatmap.2(High_CVB.zs,col=hc(100),scale="row",key=TRUE,symkey=FALSE, trace="none", main="Bacterial Cutoff", density.info="none",dendrogram="column", labRow=row.names(High_CVB.zs), colCol=c(class), margins=c(5,13), srtCol=90,)
-Figure8A<-heatmap.2(High_CVB.zs,col=hc(100),scale="row",key=TRUE,symkey=FALSE, trace="none", main="Bacterial Cutoff", density.info="none",dendrogram="both", labRow=row.names(High_CVB.zs), colCol=c(class), margins=c(5,13), srtCol=90,)
-
-
-# Ordering Columns by temperature
-High_CVB.zs.temp <- High_CVB.zs[,order(map_MG$SoilTemperature_to10cm)]
-
-
-Figure8B<-heatmap.2(High_CV.zs.temp,col=hc(100),scale="row",key=TRUE,symkey=FALSE, Colv= FALSE, trace="none", main="Bacterial Cutoff Ordered by Temp", density.info="none",dendrogram="row", labRow=row.names(High_CVB.zs), colCol=c("green","yellow","yellow","yellow","yellow","yellow","red","red","red","red","red","red"), margins=c(5,13), srtCol=90)
-
-
-
-### How to define meaningful clusters of KEGG Orthologs based on abundance patterns across the gradient
-HCVA_Den <- hclust(dist(High_CVA.zs))
-plot(HCVA_Den)
-rect.hclust(HCVA_Den, h=5.5)
-cutree(HCVA_Den, h=5.5)
-Output <- NULL
-for(i in 1:13){
-  cluster_Cor <- NULL
-  cluster <- High_CVA[cutree(HCVA_Den, h=5.5)==i,]
-  for (n in 1:nrow(cluster)){
-    results<-cor.test(cluster[n,],apply(cluster, 2, median))
-    cluster_Cor<- rbind(cluster_Cor, c(results$estimate,results$p.value))
-    row.names(cluster_Cor[n,]) <- row.names(cluster[n,])
-  }
-  Output <- rbind(Output, c(apply(cluster_Cor, 2, mean), nrow(cluster_Cor)))
-}
-
-High_CVA_Clusters <- NULL
-High_CVA_Clusters <- as.list(High_CVA_Clusters)
-for (i in 1:length(unique(cutree(HCVA_Den, h=5.5)))){
-  High_CVA_Clusters[[length(High_CVA_Clusters)+1]] <- as.data.frame(High_CVA[cutree(HCVA_Den, h=5.5)==i,])
-}
-
-write.table(row.names(High_CVA_Clusters[[1]]),"HCVA_H55_C1.txt", sep="\t",quote=FALSE, col.names=FALSE)
-
-write.table(row.names(High_CVA_Clusters[[2]]),"HCVA_H55_C2.txt", sep="\t",quote=FALSE, col.names=FALSE)
-
-write.table(row.names(High_CVA_Clusters[[3]]),"HCVA_H55_C3.txt", sep="\t",quote=FALSE, col.names=FALSE)
-
-write.table(row.names(High_CVA_Clusters[[4]]),"HCVA_H55_C4.txt", sep="\t",quote=FALSE, col.names=FALSE)
-
-write.table(row.names(High_CVA_Clusters[[5]]),"HCVA_H55_C5.txt", sep="\t",quote=FALSE, col.names=FALSE)
-
-write.table(row.names(High_CVA_Clusters[[6]]),"HCVA_H55_C6.txt", sep="\t",quote=FALSE, col.names=FALSE)
-
-write.table(row.names(High_CVA_Clusters[[7]]),"HCVA_H55_C7.txt", sep="\t",quote=FALSE, col.names=FALSE)
-
-write.table(row.names(High_CVA_Clusters[[8]]),"HCVA_H55_C8.txt", sep="\t",quote=FALSE, col.names=FALSE)
-
-write.table(row.names(High_CVA_Clusters[[9]]),"HCVA_H55_C9.txt", sep="\t",quote=FALSE, col.names=FALSE)
-
-write.table(row.names(High_CVA_Clusters[[10]]),"HCVA_H55_C10.txt", sep="\t",quote=FALSE, col.names=FALSE)
-
-write.table(row.names(High_CVA_Clusters[[11]]),"HCVA_H55_C11.txt", sep="\t",quote=FALSE, col.names=FALSE)
-
-write.table(row.names(High_CVA_Clusters[[12]]),"HCVA_H55_C12.txt", sep="\t",quote=FALSE, col.names=FALSE)
-
-
-### KO T-test (difference in functional richness)
-
-KO_NZ_PA <- 1*(KO_NZ>0)
-colSums(KO_NZ_PA)
-
-
-class3 <- class
-class3
-class3[12] <- "yellow"
-t.test(colSums(KO_NZ_PA[,class3=="yellow"]),colSums(KO_NZ_PA[,class3=="red"]))
-# No Significant difference in richness of KEGG Orthologs found between Recovered/Reference and FireAffected
-
-
-
-
-
-plot(hclust(dist(t(KO.rpob_NZ))))
-
-### t test of KO abudnace in recovered vs reference sites
-output.out<- NULL
-for(i in 1:nrow(KO.rpob_NZ)){
-  active <- KO.rpob_NZ[i,class3=="red"]
-  recref <- KO.rpob_NZ[i,class3=="yellow"]
-  output <- t.test(active,recref)
-  output.out <- rbind(output.out, c(rownames(KO.rpob_NZ)[i], output$statistic, output$parameter, output$p.value))
-}
-
-hist(output.out[,3])
-sig_KO <- output.out[output.out[,4]<0.05,]
-
-KO_FA_SIG.rpob <- KO.rpob_NZ[output.out[,4]<0.05,]
-
-FA_KOs <- sig_KO[sig_KO[,2]>0,]
-KO_FA_SIG.rpob <- KO_FA_SIG.rpob[sig_KO[,2]>0,]
-
-RR_KOs <- sig_KO[sig_KO[,2]<0,]
-
-row.names(KO_FA_SIG.rpob) <- sub("KO:", "", row.names(KO_FA_SIG.rpob))
-
-FA_KOs[,1] <- sub("KO:", "", FA_KOs[,1])
-RR_KOs[,1] <- sub("KO:", "", RR_KOs[,1])
-
-FAKO.zs <- decostand(KO_FA_SIG.rpob, method="standardize", MARGIN=1)
-FAKO.zs.temp <- FAKO.zs[,order(map_MG$SoilTemperature_to10cm)]
-
-Figure9<-heatmap.2(FAKO.zs.temp,col=hc(100),scale="row",key=TRUE,symkey=FALSE, Colv= FALSE, trace="none", main="Fire Affected KOs", density.info="none",dendrogram="row", labRow=row.names(FAKO.zs.temp), colCol=c("green","yellow","yellow","yellow","yellow","yellow","red","red","red","red","red","red"), margins=c(5,13), srtCol=90)
-
-
-# Outputs for MinPath (http://omics.informatics.indiana.edu/MinPath/run.php)
-write.table(FA_KOs[,1],"Significant_FireAffected_KOs.txt", sep="\t",quote=FALSE, col.names=FALSE)
-write.table(RR_KOs[,1], "Significant_RecRef_KOs.txt", sep="\t", quote=FALSE, col.names=FALSE)
-
-
-### What about all of our KOs
-KO.rpob_NZ
-row.names(KO.rpob_NZ)<-sub("KO:", "", row.names(KO.rpob_NZ))
-
-write.table(row.names(KO.rpob_NZ),"All_KOs.txt", sep="\t",quote=FALSE, col.names=FALSE)
-
-
-MinPath_AllKOs <- read.table("MinPath_AllKOs_Formatted.txt", sep="\t", header=TRUE, stringsAsFactors = FALSE)
-
-write.table(row.names(KO.rpob_NZ[KO.rpob_NZ[,1]>0,]), "C01_KOs.txt", sep="\t", quote=FALSE, col.names=FALSE)
-
-write.table(row.names(KO.rpob_NZ[KO.rpob_NZ[,2]>0,]), "C03_KOs.txt", sep="\t", quote=FALSE, col.names=FALSE)
-
-write.table(row.names(KO.rpob_NZ[KO.rpob_NZ[,3]>0,]), "C04_KOs.txt", sep="\t", quote=FALSE, col.names=FALSE)
-
-write.table(row.names(KO.rpob_NZ[KO.rpob_NZ[,4]>0,]), "C05_KOs.txt", sep="\t", quote=FALSE, col.names=FALSE)
-
-write.table(row.names(KO.rpob_NZ[KO.rpob_NZ[,5]>0,]), "C06_KOs.txt", sep="\t", quote=FALSE, col.names=FALSE)
-
-
-C01 <- 
-write.table(row.names(KO.rpob_NZ[KO.rpob_NZ[,6]>0,]), "C07_KOs.txt", sep="\t", quote=FALSE, col.names=FALSE)
-
-write.table(row.names(KO.rpob_NZ[KO.rpob_NZ[,7]>0,]), "C10_KOs.txt", sep="\t", quote=FALSE, col.names=FALSE)
-
-write.table(row.names(KO.rpob_NZ[KO.rpob_NZ[,8]>0,]), "C12_KOs.txt", sep="\t", quote=FALSE, col.names=FALSE)
-
-write.table(row.names(KO.rpob_NZ[KO.rpob_NZ[,9]>0,]), "C14_KOs.txt", sep="\t", quote=FALSE, col.names=FALSE)
-
-write.table(row.names(KO.rpob_NZ[KO.rpob_NZ[,10]>0,]), "C15_KOs.txt", sep="\t", quote=FALSE, col.names=FALSE)
-
-write.table(row.names(KO.rpob_NZ[KO.rpob_NZ[,11]>0,]), "C16_KOs.txt", sep="\t", quote=FALSE, col.names=FALSE)
-
-write.table(row.names(KO.rpob_NZ[KO.rpob_NZ[,12]>0,]), "C17_KOs.txt", sep="\t", quote=FALSE, col.names=FALSE)
-
-
-C01 <- read.table("C01_MinPath_Formatted.txt", sep="\t", header=TRUE, stringsAsFactors = FALSE)
-C03 <- read.table("C03_MinPath_Formatted.txt", sep="\t", header=TRUE, stringsAsFactors = FALSE)
-C04 <- read.table("C04_MinPath_Formatted.txt", sep="\t", header=TRUE, stringsAsFactors = FALSE)
-C05 <- read.table("C05_MinPath_Formatted.txt", sep="\t", header=TRUE, stringsAsFactors = FALSE)
-C06 <- read.table("C06_MinPath_Formatted.txt", sep="\t", header=TRUE, stringsAsFactors = FALSE)
-C07 <- read.table("C07_MinPath_Formatted.txt", sep="\t", header=TRUE, stringsAsFactors = FALSE)
-C10 <- read.table("C10_MinPath_Formatted.txt", sep="\t", header=TRUE, stringsAsFactors = FALSE)
-C12 <- read.table("C12_MinPath_Formatted.txt", sep="\t", header=TRUE, stringsAsFactors = FALSE)
-C14 <- read.table("C14_MinPath_Formatted.txt", sep="\t", header=TRUE, stringsAsFactors = FALSE)
-C15 <- read.table("C15_MinPath_Formatted.txt", sep="\t", header=TRUE, stringsAsFactors = FALSE)
-C16 <- read.table("C16_MinPath_Formatted.txt", sep="\t", header=TRUE, stringsAsFactors = FALSE)
-C17 <- read.table("C17_MinPath_Formatted.txt", sep="\t", header=TRUE, stringsAsFactors = FALSE)
-
-#Shared_Paths <- unique(c(C01$Path, C03$Path, C04$Path, C05$Path, C06$Path, C07$Path, C10$Path, C12$Path, C14$Path, C15$Path, C16$Path, C17$Path))
-Shared_Paths <- Reduce(intersect, list(C01$Path, C03$Path, C04$Path, C05$Path, C06$Path, C07$Path, C10$Path, C12$Path, C14$Path, C15$Path, C16$Path, C17$Path))
-
-grep(Shared_Paths[1],C01$Path)
-MinPath_Data <- NULL
-for (i in 1:length(Shared_Paths)){
-  x <- c(C01[C01$Path==Shared_Paths[i],4],C03[C03$Path==Shared_Paths[i],4],C04[C04$Path==Shared_Paths[i],4],C05[C05$Path==Shared_Paths[i],4],C06[C06$Path==Shared_Paths[i],4],C07[C07$Path==Shared_Paths[i],4],C10[C10$Path==Shared_Paths[i],4],C12[C12$Path==Shared_Paths[i],4],C14[C14$Path==Shared_Paths[i],4],C15[C15$Path==Shared_Paths[i],4],C16[C16$Path==Shared_Paths[i],4],C17[C17$Path==Shared_Paths[i],4])
-  MinPath_Data <- rbind(MinPath_Data, x)
-}
-
-
-
-MinPath_RecRef <- MinPath_Data[,map_MG$Classification!="FireAffected"]
-MinPath_FA <- MinPath_Data[,map_MG$Classification=="FireAffected"]
-
-colnames(MinPath_RecRef) <- map_MG[map_MG$Classification!="FireAffected",][,1]
-colnames(MinPath_FA) <- map_MG[map_MG$Classification=="FireAffected",][,1]
-MinPath_tTest <- NULL
-for (i in 1:nrow(MinPath_Data)){
-  result <- t.test(MinPath_RecRef[i,],MinPath_FA[i,])
-  MinPath_tTestt <- rbind(MinPath_tTest, c(Shared_Paths[i],result$statistic, result$parameter, result$p.value))
-}
-
-plot(apply(MinPath_RecRef, 1, mean), apply(MinPath_FA,1,mean))
-setdiff(Shared_Paths, Pathways)
