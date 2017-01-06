@@ -185,20 +185,47 @@ Combined[,4]<-c(rep("A",42),rep("B",42),rep("C",28))
 colnames(Combined) <- c("Phylum", "Proportion", "Category", "Text")
 Combined$Category_f <- factor(Combined$Text, levels=c("A","B","C"))
 
-Combined_Abundant <- Combined[Combined$Proportion>0.01,]
+Combined$Phylum <- sub("Thermi", "Deinococcus-Thermus", Combined$Phylum)
 
-Combined_Rare <- Combined[Combined$Proportion<0.01,]
+Names <- unique(Combined$Phylum)
+CA_P <- NULL
+CR_P <- NULL
+for(i in 1:length(Names)){
+  x <- Combined[grep(Names[i],Combined$Phylum, fixed=TRUE),]
+  if(sum(1*(x[,2]<=0.05))==nrow(x)){
+    CR_P <- rbind(CR_P, x)
+  }else{
+    CA_P <- rbind(CA_P,x)
+  }
+    
+  }
 
-pa <- ggplot(data=Combined_Abundant, aes(x=Phylum, y=Proportion)) + geom_bar(stat="identity", aes(x=Phylum,y=Proportion)) + facet_wrap(~Category_f, nrow=3) + theme(strip.background = element_blank(), axis.text.x = element_text(angle=60, hjust=1, vjust=1, lineheight = rel(2), size=rel(1.2)), axis.title.x= element_text(vjust=1),strip.text.x=element_text(size=rel(2))) + guides(fill=FALSE)
+row.names(CA_P) <- c(1:nrow(CA_P))
+# Add the unclassifieds to the Rare table
+CR_P <- rbind(CR_P, CA_P[36,])
+CR_P <- rbind(CR_P, CA_P[33,])
+
+# Remove unclassified archaea, unclassifieds, and duplicated unclassified_bacteria from the abundant table. 
+CA_P <- CA_P[-37,]
+CA_P <- CA_P[-36,]
+CA_P <- CA_P[-35,]
+CA_P <- CA_P[-34,]
+CA_P <- CA_P[-33,]
+CA_P <- CA_P[-32,]
+
+nrow(CA_P) + nrow(CR_P) == nrow(Combined)
+
+pa <- ggplot(data=CA_P, aes(x=Phylum, y=Proportion)) + geom_bar(stat="identity", aes(x=Phylum,y=Proportion)) + facet_wrap(~Category_f, nrow=3, strip.position="right") + theme(strip.background = element_blank(),strip.text.y=element_blank(), axis.text.x = element_text(angle=60, hjust=1, vjust=1, lineheight = rel(2), size=rel(1)), axis.title.x= element_text(vjust=1),strip.text.x=element_text(size=rel(2))) + guides(fill=FALSE)
 pa
+ggsave("../Figures/Fig3A.eps", width=200, units="mm")
 
-pr <- ggplot(data=Combined_Rare, aes(x=Phylum, y=Proportion)) + geom_bar(stat="identity", aes(x=Phylum,y=Proportion)) + facet_wrap(~Category_f, nrow=3) + theme(strip.background = element_blank(), axis.text.x = element_text(angle=60, hjust=1, vjust=1, lineheight = rel(2), size=rel(1)), axis.title.x= element_text(vjust=1),strip.text.x=element_text(size=rel(2))) + guides(fill=FALSE)
+pr <- ggplot(data=CR_P, aes(x=Phylum, y=Proportion)) + geom_bar(stat="identity", aes(x=Phylum,y=Proportion)) + facet_wrap(~Category_f, nrow=3, strip.position="right") + theme(strip.background = element_blank(), strip.text.y=element_blank(), axis.text.x = element_text(angle=60, hjust=1, vjust=1, lineheight = rel(2), size=rel(1)), axis.title.x= element_text(vjust=1),strip.text.x=element_text(size=rel(2))) + guides(fill=FALSE)
 pr
+ggsave("../Figures/Fig3B.eps", width=200, units="mm")
 
-
-p2 <- ggplot(data=Combined, aes(x=Phylum, y=Proportion, fill=Phylum)) + geom_bar(stat="identity",aes(x=Phylum,y=Proportion)) + facet_wrap(~Category_f, nrow=3,) + theme(strip.background = element_blank(),axis.text.x = element_text(angle=90, hjust=1, vjust=.5,  face="bold", lineheight = rel(2), size=rel(1.2)), axis.title.x=element_text(vjust=-1), strip.text.x=element_text(size=rel(2))) + guides(fill=FALSE)
-p2
-ggsave("../Figures/Fig3.eps", width=200, units="mm")
+##p2 <- ggplot(data=Combined, aes(x=Phylum, y=Proportion, fill=Phylum)) + geom_bar(stat="identity",aes(x=Phylum,y=Proportion)) + facet_grid(~Category_f, fac) + theme(strip.background = element_blank(),axis.text.x = element_text(angle=90, hjust=1, vjust=.5,  face="bold", lineheight = rel(2), size=rel(1.2)), axis.title.x=element_text(vjust=-1), strip.text.x=element_text(size=rel(2))) + guides(fill=FALSE)
+##p2
+#ggsave("../Figures/Fig3.eps", width=200, units="mm")
 
 ### Venn Meta_Analysis
 map.f <- read.table("Centralia_Full_Map_Fixed.txt", sep="\t", header= TRUE, row.names=1, stringsAsFactors = FALSE)
@@ -603,57 +630,74 @@ library(vegan)
 hc=colorRampPalette(c("#91bfdb","white","#fc8d59"), interpolate="linear")
 
 Combined_Sig_Modules.zs <- decostand(Combined_Sig_Modules, method="standardize", MARGIN=1)
-
+par(mfrow=c(1,1))
 setEPS()
 
-png("../Figures/Heatmap_Combined.png", width = 1000, height=4000, pointsize=8)
-fig10 <- heatmap.2(Combined_Sig_Modules.zs, col=hc(100), key=FALSE, symkey=FALSE, trace="none", density.info="none", dendrogram="row",cexRow = 2, labRow=FALSE, margins=c(5,13), srtCol=90, colRow = Classification_Test, RowSideColors=Classification_Test, lhei = c(1,100))
+png("../Figures/Heatmap_Combined.png", width = 2000, height=4000, pointsize=8)
+fig10 <- heatmap.2(Combined_Sig_Modules.zs, col=hc(100), key=FALSE, symkey=FALSE, trace="none", density.info="none", colsep=c(1:12),rowsep=c(1:nrow(Combined_Sig_Modules.zs)), sepcolor="black", sepwidth=c(0.01,0.00001), dendrogram="row",cexRow = 2, labRow=FALSE, margins=c(5,13), srtCol=90, colRow = Classification_Test, RowSideColors=Classification_Test, lhei = c(1,100))
 dev.off()
 
 # Investigating the Clusters
 Temp_Sensitive <- c("M00591","M00644", "M00339","M00480","M00474","M00298","M00251","M00090","M00235","M00204","M00722","M00216","M00230","M00607","M00662","M00446","M00040","M00208","M00042","M00641","M00672","M00627","M00509","M00639","M00136","M00025","M00328","M00593","M00631")
 Modules[Temp_Sensitive,]
+write.table(Modules[Temp_Sensitive,1:2], file="TempSensitiveModules.txt", quote=FALSE)
+
 C1 <- c("M00597", "M00435","M00011","M00320","M00638","M00249","M00153","M00163","M00609","M00161","M00145","M00346","M00061","M00580","M00345","M00172","M00171","M00027")
 Modules[C1,]
+write.table(Modules[C1,1:2], file="Cluster1_Modules.txt", quote=FALSE)
 
 C2 <- c("M00479","M00116","M00196","M00343","M00342","M00309","M00482","M00113","M00256","M00243","M00283","M00550","M00151","M00540","M00416","M00548","M00604","M00623","M00203","M00219","M00001","M00167","M00033","M00081","M00162","M00545","M00569","M00436","M00510","M00010","M00176","M00165","M00612")
 Modules[C2,]
+write.table(Modules[C2,1:2], file="Cluster2_Modules.txt", quote=FALSE)
 
 C3 <- c("M00668","M00080","M00543","M00091","M00331","M00613","M00099","M00186","M00250","M00190","M00602","M00544","M00135")
 Modules[C3,]
+write.table(Modules[C3,1:2], file="Cluster3_Modules.txt", quote=FALSE)
 
 C4 <- c("M00400","M00403","M00423","M00413","M00179","M00184","M00391","M00390","M00288","M00177","M00425","M00181","M00180","M00182","M00529","M00120","M00095","M00344","M00530","M00367","M00365","M00166","M00374", "M00032","M00401","M00072","M00264","M00261","M00633","M00596","M00763","M00031","M00159","M00582","M00338")
 Modules[C4,]
+write.table(Modules[C4,1:2], file="Cluster4_Modules.txt", quote=FALSE)
 
 C5 <- c("M00013", "M00717","M00442","M00290","M00473")
 Modules[C5,]
+write.table(Modules[C5,1:2], file="Cluster5_Modules.txt", quote=FALSE)
 
 C6<- c("M00168","M00740", "M00368","M00018","M00012","M00052","M00178","M00023","M00019","M00570","M00140","M00222","M00360","M00359","M00378","M00237","M00053","M00016","M00114","M00254","M00141","M00364","M00003","M00005","M00045","M00239","M00207","M00170","M00489","M00490","M00611", "M00392","M00267","M00275","M00507","M00552","M00614","M00051","M00366","M00007","M00121","M00002", "M00149", "M00021", "M00029")
 Modules[C6,]
+write.table(Modules[C6,1:2], file="Cluster6_Modules.txt", quote=FALSE)
 
 C7 <- c("M00133","M00620","M00616","M00484","M00087","M00088","M00375")
 Modules[C7,]
+write.table(Modules[C7,1:2], file="Cluster7_Modules.txt", quote=FALSE)
 
 C8 <- c("M00189","M00471","M00155","M00376","M00483","M00434","M00236","M00193","M00028","M00036","M00549","M00506","M00260","M00454","M00505","M00246","M00245","M00093","M00060","M00572")
 Modules[C8,]
+write.table(Modules[C8,1:2], file="Cluster8_Modules.txt", quote=FALSE)
 
 C9 <- c("M00008","M00066","M00333","M00308","M00452","M00554","M00632","M00173","M00535","M00432","M00082","M00006","M00361", "M00004", "M00335")
 Modules[C9,]
+write.table(Modules[C9,1:2], file="Cluster9_Modules.txt", quote=FALSE)
 
 C10 <- c("M00125","M00022","M00049","M00048","M00026","M00157","M00336","M00188","M00096","M00127","M00131","M00209","M00526","M00525","M00527","M00531","M00117","M00064","M00009","M00259","M00144","M00729", "M00115", "M00183")
 Modules[C10,]
+write.table(Modules[C10,1:2], file="Cluster10_Modules.txt", quote=FALSE)
 
 C11 <- c("M00129","M00394","M00122","M00119","M00362","M00670","M00669")
 Modules[C11,]
+write.table(Modules[C11,1:2], file="Cluster11_Modules.txt", quote=FALSE)
 
 C12 <- c("M00567","M00465","M00647","M00725","M00242","M00358","M00458","M00481")
 Modules[C12,]
+write.table(Modules[C12,1:2], file="Cluster12_Modules.txt", quote=FALSE)
 
 C13<- c("M00357","M00077","M00450","M00646","M00035","M00460")
 Modules[C13,]
+write.table(Modules[C13,1:2], file="Cluster13_Modules.txt", quote=FALSE)
 
 C14 <- c("M00124","M00050","M00565","M00210","M00240","M00519","M00741","M00123","M00577","M00573")
 Modules[C14,]
+write.table(Modules[C14,1:2], file="Cluster14_Modules.txt", quote=FALSE)
+
 
 ### PCoA's for Module, Ortholog, and UF distacnes
 library(calibrate)
