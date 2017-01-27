@@ -65,7 +65,98 @@ v2=round(v[,"Counts"]/sum(v[,"Counts"]),2)
 v[,"Counts"]<-v2
 vennDiagram(v)
 
+### Who belongs to each category
+# f= FireAffected, r=Reference, c=Recovered
+comm.rdp <- cbind(comm, rdp)
 
+#FireAffected Only
+f<- venndata[venndata[,1]>0,]
+f<- f[f[,2]==0,]
+f <- f[f[,3]==0,]
+FireOnly <- comm.rdp[row.names(f),]
+f_tax <- c(1:7)
+for (i in 1:nrow(FireOnly)){
+  f_tax <- rbind(f_tax,unlist(strsplit(as.character(FireOnly[i,19]), ";")))
+}
+f_tax <- f_tax[-1,]
+# FireAffected + Recovered
+fc <- venndata[venndata[,1]>0,]
+fc <- fc[fc[,2]>0,]
+fc <- fc[fc[,3]==0,]
+Fire_Recovered <- comm.rdp[row.names(fc),]
+fc_tax <- c(1:7)
+for (i in 1:nrow(Fire_Recovered)){
+  fc_tax <- rbind(fc_tax,unlist(strsplit(as.character(Fire_Recovered[i,19]), ";")))
+}
+fc_tax <- fc_tax[-1,]
+# FireAffected + Reference
+fr <- venndata[venndata[,1]>0,]
+fr <- fr[fr[,3]>0,]
+fr <- fr[fr[,2]==0,]
+Fire_Reference <- comm.rdp[row.names(fr),]
+fr_tax <- c(1:7)
+for (i in 1:nrow(Fire_Reference)){
+  fr_tax <- rbind(fr_tax,unlist(strsplit(as.character(Fire_Reference[i,19]), ";")))
+}
+fr_tax <- fr_tax[-1,]
+#Recovered Only
+c <- venndata[venndata[,2]>0,]
+c<- c[c[,1]==0,]
+c <- c[c[,3]==0,]
+RecoveredOnly <- comm.rdp[row.names(c),]
+c_tax <- c(1:7)
+for (i in 1:nrow(RecoveredOnly)){
+  c_tax <- rbind(c_tax,unlist(strsplit(as.character(RecoveredOnly[i,19]), ";")))
+}
+c_tax <- c_tax[-1,]
+#Recovered + Reference
+cf <- venndata[venndata[,2]>0,]
+cf<- cf[cf[,3]>0,]
+cf <- cf[cf[,1]==0,]
+Recovered_Reference <- comm.rdp[row.names(cf),]
+cf_tax <- NULL
+for (i in 1:nrow(Recovered_Reference)){
+  cf_tax <- rbind(cf_tax,unlist(strsplit(as.character(Recovered_Reference[i,19]), ";")))
+}
+# Reference Only
+r <- venndata[venndata[,3]>0,]
+r <- r[r[,2]==0,]
+r <- r[r[,1]==0,]
+ReferenceOnly <- comm.rdp[row.names(r),]
+r_tax <- NULL
+for (i in 1:nrow(ReferenceOnly)){
+  r_tax <- rbind(r_tax,unlist(strsplit(as.character(ReferenceOnly[i,19]), ";")))
+}
+
+
+# All Classes
+a <- venndata[venndata[,1]>0,]
+a <- a[a[,2]>0,]
+a <- a[a[,3]>0,]
+All_Classes <- comm.rdp[row.names(a),]
+ac_tax <- NULL
+for (i in 1:nrow(All_Classes)){
+  ac_tax <- rbind(ac_tax,unlist(strsplit(as.character(All_Classes[i,19]), ";")))
+}
+
+Taxa <- NULL
+for (i in 1:nrow(comm.rdp)){
+  Taxa <- rbind(Taxa,unlist(strsplit(as.character(comm.rdp[i,19]), ";")))
+}
+Phyla <- unique(Taxa[,2])
+Phyla <- gsub("\\[|\\]","", Phyla)
+Phyla <- gsub("k__","", Phyla)
+Phyla <- gsub(" p__","", Phyla)
+Phyla <- Phyla[-57]
+Phyla
+Venn_Phyla_Counts <- NULL
+Venn_Phyla_OTUs<- NULL
+for (i in 1:length(Phyla)){
+  tryCatch({Venn_Phyla_Counts <- rbind(Venn_Phyla_Counts,c(sum(Fire_Recovered[grepl(Phyla[i],fc_tax[,2]),1:18]),sum(FireOnly[grepl(Phyla[i],f_tax[,2]),1:18]),sum(All_Classes[grepl(Phyla[i],ac_tax[,2]),1:18]),sum(Fire_Reference[grepl(Phyla[i],fr_tax[,2]),1:18]),sum(Recovered_Reference[grepl(Phyla[i],cf_tax[,2]),1:18]),sum(RecoveredOnly[grepl(Phyla[i],c_tax[,2]),1:18]),sum(ReferenceOnly[grepl(Phyla[i],r_tax[,2]),1:18])))},error=function(e){})
+  Venn_Phyla_OTUs <- rbind(Venn_Phyla_OTUs, c(nrow(Fire_Recovered[grepl(Phyla[i],fc_tax[,2]),]),nrow(FireOnly[grepl(Phyla[i],f_tax[,2]),]),nrow(All_Classes[grepl(Phyla[i],ac_tax[,2]),]),nrow(Fire_Reference[grepl(Phyla[i],fr_tax[,2]),]),nrow(Recovered_Reference[grepl(Phyla[i],cf_tax[,2]),]),nrow(RecoveredOnly[grepl(Phyla[i],c_tax[,2]),]),nrow(ReferenceOnly[grepl(Phyla[i],r_tax[,2]),])))
+}
+row.names(Venn_Phyla_OTUs) <- Phyla
+colnames(Venn_Phyla_OTUs) <- c("FireRecovered", "FireOnly","AllClasses","FireReference","RecoveredReference","RecoveredOnly","ReferenceOnly")
 #Write out the results of venncounts
 
 write.table(v, "VennCounts.txt", quote=FALSE, sep="\t")
@@ -86,7 +177,7 @@ map$PercentDeNovo <- Percent_DN
 map.long=melt(map, id.vars=c("Sample", "SoilTemperature_to10cm", "Classification"), measure.vars=c("NO3N_ppm","NH4N_ppm","pH","SulfateSulfur_ppm","K_ppm","Ca_ppm","Mg_ppm","OrganicMatter_500","Fe_ppm", "As_ppm", "P_ppm", "SoilMoisture_Per","PercentDeNovo"))
 
 p <- ggplot(map, aes(SoilTemperature_to10cm, PercentDeNovo))
-p+ geom_point() + labs(y="Community Novelty", x="Soil Temperature")
+p+ geom_point(size=3) + labs(y="Community Novelty", x="Soil Temperature") + theme(axis.text= element_text(size=15), axis.ticks = element_line(size=1)) + xlim(0,60) + ylim(0,0.7)
 ggsave("../Figures/Fig2.eps", width=178, units="mm")
 
 #Correlation test between Novelty and Soil Temperature
@@ -183,7 +274,7 @@ Combined[,3]<-c(rep("RelativeAbundanceTherm",42),rep("PercentageThermophileOTUs"
 Combined[,4]<-c(rep("A",42),rep("B",42),rep("C",28))
 
 colnames(Combined) <- c("Phylum", "Proportion", "Category", "Text")
-Combined$Category_f <- factor(Combined$Text, levels=c("A","B","C"))
+Combined$Category_f <- factor(Combined$Text, levels=c("B","A","C"))
 
 Combined$Phylum <- sub("Thermi", "Deinococcus-Thermus", Combined$Phylum)
 
@@ -215,21 +306,31 @@ CA_P <- CA_P[-32,]
 
 nrow(CA_P) + nrow(CR_P) == nrow(Combined)
 
-pa <- ggplot(data=CA_P, aes(x=Phylum, y=Proportion)) + geom_bar(stat="identity", aes(x=Phylum,y=Proportion)) + facet_wrap(~Category_f, nrow=3, strip.position="right") + theme(strip.background = element_blank(),strip.text.y=element_blank(), axis.text.x = element_text(angle=60, hjust=1, vjust=1, lineheight = rel(2), size=rel(1)), axis.title.x= element_text(vjust=1),strip.text.x=element_text(size=rel(2))) + guides(fill=FALSE)
+pa <- ggplot(data=CA_P, aes(x=Phylum, y=Proportion)) + geom_bar(stat="identity", aes(x=Phylum,y=Proportion)) + facet_wrap(~Category_f, nrow=3, strip.position="right") + theme(strip.background = element_blank(),strip.text.y=element_blank(), axis.text.x = element_text(angle=60, hjust=1, vjust=1, lineheight = rel(2), size=10), axis.title.x= element_text(vjust=1),strip.text.x=element_text(size=rel(2)), axis.text.y=element_text(size=15)) + guides(fill=FALSE)
 pa
-ggsave("../Figures/Fig3A.eps", width=200, units="mm")
+ggsave("../Figures/Fig3A.png", width=50, units="mm")
 
-pr <- ggplot(data=CR_P, aes(x=Phylum, y=Proportion)) + geom_bar(stat="identity", aes(x=Phylum,y=Proportion)) + facet_wrap(~Category_f, nrow=3, strip.position="right") + theme(strip.background = element_blank(), strip.text.y=element_blank(), axis.text.x = element_text(angle=60, hjust=1, vjust=1, lineheight = rel(2), size=rel(1)), axis.title.x= element_text(vjust=1),strip.text.x=element_text(size=rel(2))) + guides(fill=FALSE)
+pr <- ggplot(data=CR_P, aes(x=Phylum, y=Proportion)) + geom_bar(stat="identity", aes(x=Phylum,y=Proportion)) + facet_wrap(~Category_f, nrow=3, strip.position="right") + theme(strip.background = element_blank(), strip.text.y=element_blank(), axis.text.x = element_text(angle=60, hjust=1, vjust=1, lineheight = rel(2), size=10), axis.title.x= element_text(vjust=1),strip.text.x=element_text(size=rel(2)), axis.text.y=element_text(size=15)) + guides(fill=FALSE)
 pr
-ggsave("../Figures/Fig3B.eps", width=200, units="mm")
+ggsave("../Figures/Fig3B.png", width=200, units="mm")
+
+
+### Trying to Even out Bars
+pa <- ggplot(data=CA_P, aes(x=Phylum, y=Proportion)) + geom_bar(stat="identity", aes(x=Phylum,y=Proportion)) + facet_wrap(~Category_f, nrow=3, strip.position="right") + theme(strip.background = element_blank(),strip.text.y=element_blank(), axis.text.x = element_text(angle=60, hjust=1, vjust=1, lineheight = rel(2), size=10), axis.title.x= element_text(vjust=1),strip.text.x=element_text(size=rel(2)), axis.text.y=element_blank()) + guides(fill=FALSE)
+pa
+ggsave("../Figures/Fig3A.png", width=50, units="mm")
+
+pr <- ggplot(data=CR_P, aes(x=Phylum, y=Proportion)) + geom_bar(stat="identity", aes(x=Phylum,y=Proportion)) + facet_wrap(~Category_f, nrow=3, strip.position="right") + theme(strip.background = element_blank(), strip.text.y=element_blank(), axis.text.x = element_text(angle=60, hjust=1, vjust=1, lineheight = rel(2), size=10), axis.title.x= element_text(vjust=1),strip.text.x=element_text(size=rel(2)), axis.text.y=element_blank()) + guides(fill=FALSE)
+pr
+ggsave("../Figures/Fig3B.png", width=200, units="mm")
 
 ##p2 <- ggplot(data=Combined, aes(x=Phylum, y=Proportion, fill=Phylum)) + geom_bar(stat="identity",aes(x=Phylum,y=Proportion)) + facet_grid(~Category_f, fac) + theme(strip.background = element_blank(),axis.text.x = element_text(angle=90, hjust=1, vjust=.5,  face="bold", lineheight = rel(2), size=rel(1.2)), axis.title.x=element_text(vjust=-1), strip.text.x=element_text(size=rel(2))) + guides(fill=FALSE)
 ##p2
 #ggsave("../Figures/Fig3.eps", width=200, units="mm")
 
 ### Venn Meta_Analysis
-map.f <- read.table("Centralia_Full_Map_Fixed.txt", sep="\t", header= TRUE, row.names=1, stringsAsFactors = FALSE)
-meta <- read.table("Carini_RDP_rmCM.txt", sep="\t", header = TRUE, row.names=1, stringsAsFactors = FALSE)
+map.f <- read.table("Supplemental/Centralia_Full_Map_Fixed.txt", sep="\t", header= TRUE, row.names=1, stringsAsFactors = FALSE)
+meta <- read.table("supplemental/Carini_RDP_rmCM.txt", sep="\t", header = TRUE, row.names=1, stringsAsFactors = FALSE)
 
 Cen <- meta[,grepl("C",colnames(meta))]
 Car <- meta[,grepl("SRR", colnames(meta))]
@@ -312,11 +413,11 @@ Modules["M00611",3] <- paste(c(Modules["M00161",3],Modules["M00163",3],Modules["
 Modules["M00616",3] <- paste(c(Modules["M00185",3],Modules["M00176",3]), collapse=" ")
 
 #Produces a list, each item in this list is a dataframe with the KO's in our dataset 
-for (KO in 1:nrow(KO.rpob)){
-  KO_M <- grep(row.names(KO.rpob)[KO], Modules$Definition)
+for (y in 1:nrow(KO.rpob)){
+  KO_M <- grep(row.names(KO.rpob)[y], Modules$Definition)
   if (length(KO_M)>0){
     for (x in 1:length(KO_M)){
-      Dictionary[[KO_M[x]]] <- rbind(Dictionary[[KO_M[x]]], KO.rpob[KO,])
+      Dictionary[[KO_M[x]]] <- rbind(Dictionary[[KO_M[x]]], KO.rpob[y,])
     }
   }
 }
@@ -508,6 +609,20 @@ M_v_U.protest <- protest(Module.pcoa,uf.pcoa)
 
 K_v_U.mantel <- mantel(KO.d, uf_mg.d)
 K_v_U.protest <- protest(KO.pcoa, uf.pcoa)
+
+space.d <- read.table("spatialdistancematrix.txt", sep="\t", stringsAsFactors = FALSE, header=TRUE, row.names=1)
+space.d <- as.matrix(space.d)
+
+uf.m <- as.matrix(uf)
+mantel(space.d, uf.m)
+as.numeric(space.d)
+plot(as.numeric(space.d),as.numeric(as.matrix(uf)))
+
+space.d.mg <- space.d[c(1,3,4,5,6,7,10,12,14,15,16,17),c(1,3,4,5,6,7,10,12,14,15,16,17)]
+
+plot(as.numeric(space.d.mg), as.matrix(KO.d))
+plot(as.numeric(space.d.mg), as.matrix(uf_mg.d))
+
 # Protest and Mantel test reveal all three datasets resemble each other
 
 
@@ -636,6 +751,10 @@ setEPS()
 png("../Figures/Heatmap_Combined.png", width = 2000, height=4000, pointsize=8)
 fig10 <- heatmap.2(Combined_Sig_Modules.zs, col=hc(100), key=FALSE, symkey=FALSE, trace="none", density.info="none", colsep=c(1:12),rowsep=c(1:nrow(Combined_Sig_Modules.zs)), sepcolor="black", sepwidth=c(0.01,0.00001), dendrogram="row",cexRow = 2, labRow=FALSE, margins=c(5,13), srtCol=90, colRow = Classification_Test, RowSideColors=Classification_Test, lhei = c(1,100))
 dev.off()
+### For the Legend
+png("../Figures/Heatmap_Legend.png", width = 2000, height=4000, pointsize=8)
+fig10 <- heatmap.2(Combined_Sig_Modules.zs, col=hc(100), key=TRUE, symkey=FALSE, trace="none", density.info="none", colsep=c(1:12),rowsep=c(1:nrow(Combined_Sig_Modules.zs)), sepcolor="black", sepwidth=c(0.01,0.00001), dendrogram="row",cexRow = 2, labRow=FALSE, margins=c(5,13), srtCol=90, colRow = Classification_Test, RowSideColors=Classification_Test, lhei = c(1,10))
+dev.off()
 
 # Investigating the Clusters
 Temp_Sensitive <- c("M00591","M00644", "M00339","M00480","M00474","M00298","M00251","M00090","M00235","M00204","M00722","M00216","M00230","M00607","M00662","M00446","M00040","M00208","M00042","M00641","M00672","M00627","M00509","M00639","M00136","M00025","M00328","M00593","M00631")
@@ -699,6 +818,9 @@ Modules[C14,]
 write.table(Modules[C14,1:2], file="Cluster14_Modules.txt", quote=FALSE)
 
 
+### Finding Maximum Site for each Module
+hist(apply(Combined_Sig_Modules.zs, 1, which.max))
+hist(apply(mid_mod,1,which.max))
 ### PCoA's for Module, Ortholog, and UF distacnes
 library(calibrate)
 class <- rep("black", nrow(map_MG))
@@ -725,22 +847,89 @@ env=map_MG[,c("SoilTemperature_to10cm", "NO3N_ppm", "pH", "K_ppm", "Mg_ppm", "Or
 
 dev.off()
 setEPS()
-postscript("../Figures/Figure5.eps", width = 12, height=4, pointsize=8,paper="special")
-par(mfrow=c(1,3))
-plot(Module.pcoa$points[,1], Module.pcoa$points[,2],cex=1.5, bg=class, pch=21, main= "rpoB Relativized Bray Curtis KEGG Module PCoA", xlab= paste("PCoA1: ",100*round(M_ax1.v,3),"% var. explained",sep=""), ylab= paste("PCoA2: ",100* round(M_ax2.v,3),"% var. explained",sep=""))
-textxy(X=Module.pcoa$points[,1],Y=Module.pcoa$points[,2], lab=map_MG$Sample,cex=1)
+postscript("../Figures/Figure5.eps", width = 15, height=15, pointsize=12,paper="special")
+#par(mfrow=c(1,3))
+plot(Module.pcoa$points[,1], Module.pcoa$points[,2],cex=4, bg=class, pch=21, main= "rpoB Relativized Bray Curtis KEGG Module PCoA", xlab= paste("PCoA1: ",100*round(M_ax1.v,3),"% var. explained",sep=""), ylab= paste("PCoA2: ",100* round(M_ax2.v,3),"% var. explained",sep=""))
+#textxy(X=Module.pcoa$points[,1],Y=Module.pcoa$points[,2], lab=map_MG$Sample,cex=2)
 M_env<- envfit(Module.pcoa,env)
 plot(M_env, p.max=0.05, col="black")
 
-plot(KO.pcoa$points[,1], KO.pcoa$points[,2],cex=1.5, bg=class, pch=21, main= "rpoB Relativized Bray Curtis KEGG Ortholog PCoA", xlab= paste("PCoA1: ",100*round(KO_ax1.v,3),"% var. explained",sep=""), ylab= paste("PCoA2: ",100* round(KO_ax2.v,3),"% var. explained",sep=""))
-textxy(X=KO.pcoa$points[,1], Y=KO.pcoa$points[,2],labs=map_MG$Sample, cex=1)
+#plot(KO.pcoa$points[,1], KO.pcoa$points[,2],cex=3, bg=class, pch=21, main= "rpoB Relativized Bray Curtis KEGG Ortholog PCoA", xlab= paste("PCoA1: ",100*round(KO_ax1.v,3),"% var. explained",sep=""), ylab= paste("PCoA2: ",100* round(KO_ax2.v,3),"% var. explained",sep=""))
+#textxy(X=KO.pcoa$points[,1], Y=KO.pcoa$points[,2],labs=map_MG$Sample, cex=2)
 
-KO_env=envfit(KO.pcoa, env)
-plot(KO_env, p.max=0.05, col="black")
+#KO_env=envfit(KO.pcoa, env)
+#plot(KO_env, p.max=0.05, col="black")
 
-plot(uf.pcoa$points[,1],uf.pcoa$points[,2] ,cex=1.5,pch=21,bg=class,main="Weighted UniFrac PCoA",xlab= paste("PCoA1: ",100*round(uf_ax1.v,3),"% var. explained",sep=""), ylab= paste("PCoA2: ",100* round(uf_ax2.v,3),"% var. explained",sep=""))
+#plot(uf.pcoa$points[,1],uf.pcoa$points[,2] ,cex=3,pch=21,bg=class,main="Weighted UniFrac PCoA",xlab= paste("PCoA1: ",100*round(uf_ax1.v,3),"% var. explained",sep=""), ylab= paste("PCoA2: ",100* round(uf_ax2.v,3),"% var. explained",sep=""))
 #textxy is from the calibrate library
-textxy(X=uf.pcoa$points[,1], Y=uf.pcoa$points[,2],labs=map_MG$Sample, cex=1)
-uf_env <- envfit(uf.pcoa, env)
-plot(uf_env, p.max=0.05, col="black")
+#textxy(X=uf.pcoa$points[,1], Y=uf.pcoa$points[,2],labs=map_MG$Sample, cex=2)
+#uf_env <- envfit(uf.pcoa, env)
+#plot(uf_env, p.max=0.05, col="black")
 dev.off()
+
+
+
+
+### Venn Analysis (Rarefying each category)
+
+ref_r <- comm[,map$Classification=="Reference"]
+rec_r <- comm[,map$Classification=="Recovered"]
+fire_r <- comm[,map$Classification=="FireAffected"]
+
+min(sum(fire_r),sum(rec_r),sum(ref_r))
+
+Classes_rarefied <- cbind(rowSums(fire_r),rowSums(rec_r),rowSums(ref_r))
+colnames(Classes_rarefied) <- c("FireAffected", "Recovered", "Reference")
+
+Classes_rarefied <- rrarefy(t(Classes_rarefied), 641499)
+Classes_rarefied <- t(Classes_rarefied)
+# Remove newly made singletons (from the second rarefaction)
+
+Classes_rarefied <- Classes_rarefied[rowSums(Classes_rarefied)>1,]
+Classes_pa <- 1*(Classes_rarefied>0)
+
+
+v=vennCounts(Classes_pa)
+v2=round(v[,"Counts"]/sum(v[,"Counts"]),2)
+v[,"Counts"]<-v2
+vennDiagram(v)
+
+map.f <- read.table("Supplemental/Centralia_Full_Map_Fixed.txt", sep="\t", header= TRUE, row.names=1, stringsAsFactors = FALSE)
+map <- read.table("Centralia_Collapsed_Map_forR.txt", sep="\t", header= TRUE, row.names=1, stringsAsFactors = FALSE)
+data <- read.table("Supplemental/Carini_RDP_rmCM.txt", sep="\t", header = TRUE, row.names=1, stringsAsFactors = FALSE)
+
+Cen <- data[,grepl("C",colnames(data))]
+Car <- data[,grepl("SRR", colnames(data))]
+
+Samples<- unique(map.f$Sample)
+
+collapse <- NULL
+
+for (i in 1:length(Samples)){
+  x <- Cen[,grepl(Samples[i], colnames(Cen))]
+  collapse <- cbind(collapse,rowSums(x))
+}
+colnames(collapse) <- Samples
+
+Reference <- collapse[,map$Classification=="Reference"]
+FireAffected <- collapse[,map$Classification=="FireAffected"]
+Recovered <- collapse[,map$Classification=="Recovered"]
+
+sum(Reference)
+sum(FireAffected)
+sum(Recovered)
+sum(Car)
+data.f <-cbind(rowSums(Reference),rowSums(FireAffected), rowSums(Recovered), rowSums(Car))
+colnames(data.f) <- c("Reference", "FireAffected", "Recovered", "RelicDNA")
+library(vegan)
+library(limma)
+data.rare<-rrarefy(t(data.f), 900542)
+data.rare <- t(data.rare)
+colSums(data.rare)
+
+data.rare.pa <- 1*(data.rare>0)
+data.rare.pa.nz <- data.rare.pa[rowSums(data.rare.pa)>0,]
+v=vennCounts(data.rare.pa.nz)
+v2=round(v[,"Counts"]/sum(v[,"Counts"]),2)
+v[,"Counts"]<-v2
+vennDiagram(v)
