@@ -11,6 +11,10 @@ map <- read.table("Centralia_Collapsed_Map_forR.txt",sep="\t", row.names=1, head
 
 map_MG <- map[c(1,3,4,5,6,7,10,12,14,15,16,17),]
 
+CO2_2015 <- c(525,455,500,512,484,779,581,503,6094,17112,15760,13969,7390,723,1624,597,480,477)
+CO2_MG_2015 <- CO2_2015[c(1,3,4,5,6,7,10,12,14,15,16,17)]
+t.test(CO2_MG_2015[map_MG$Classification=="FireAffected"], CO2_MG_2015[map_MG$Classification!="FireAffected"])
+
 # 16S OTU Table
 comm <- read.table("MASTER_OTU_hdf5_filteredfailedalignments_rdp_rmCM_collapse_even321000.txt", sep="\t", row.names=1, header=TRUE, stringsAsFactors = FALSE)
 rdp<- comm[,19]
@@ -559,6 +563,9 @@ uf=uf[order(row.names(uf)),order(colnames(uf))]
 uf_mg <- uf[c(1,3,4,5,6,7,10,12,14,15,16,17),c(1,3,4,5,6,7,10,12,14,15,16,17)]
 uf_mg.d <- as.dist(uf_mg)
 
+## Okay below isn't worth doing. When you relativize to rpoB before you end up with #KOs per rpoB. Therefore when you use the median value for a Module its kind of like saying here's the number of modules per rpoB. 
+#mid_mod_rel <- decostand(x=mid_mod, method="total", MARGIN=2)
+#Mod.d <- vegdist(t(mid_mod_rel), method="bray")
 # Distance matrix based on Modules
 Mod.d <- vegdist(t(mid_mod),method="bray")
 Class <- rep("Red", 12)
@@ -817,6 +824,31 @@ C14 <- c("M00124","M00050","M00565","M00210","M00240","M00519","M00741","M00123"
 Modules[C14,]
 write.table(Modules[C14,1:2], file="Cluster14_Modules.txt", quote=FALSE)
 
+### Create Supplemental Table of Summaries
+SignificantModules_Summary <- NULL
+for (i in 1:nrow(Combined_Sig_Modules)){
+  SignificantModules_Summary <- rbind(SignificantModules_Summary, c(as.matrix(Med_Mod_Ttest[row.names(Combined_Sig_Modules)[i],]), as.matrix(Med_Mod_TempCor[row.names(Combined_Sig_Modules)[i],])))
+}
+SignificantModules_Summary <- as.data.frame(SignificantModules_Summary, stringsAsFactors = FALSE)
+SignificantModules_Summary$ModuleDefinition <- Modules[row.names(Combined_Sig_Modules),1]
+SignificantModules_Summary <- SignificantModules_Summary[,c(8,7,1,2,3,4,5,6)]
+colnames(SignificantModules_Summary) <- c("Module Description","Completeness","T Statistic", "T Degrees Freedom", "T-test p value", "Pearson's Rho", "Pearson Degrees Freedom", "Pearson p value")
+SignificantModules_Summary[,-1] <- round(SignificantModules_Summary[,-1], 3)
+row.names(SignificantModules_Summary) <- row.names(Combined_Sig_Modules)
+write.table(x = SignificantModules_Summary, file="Supplemental/SupplementalTable2.txt", sep="\t", quote=FALSE)
+
+### Indicator Module Analysis
+library(indicspecies)
+IndicClusters <- rep(1,12)
+IndicClusters[map_MG$Classification=="Recovered"]=2
+IndicClusters[map_MG$Classification=="Reference"]=3
+tmidmod<- t(mid_mod)
+tmidmod <- as.data.frame(tmidmod)
+B=strassoc(tmidmod, cluster=IndicClusters,func="B")
+sel=which(B[,1]>0.2)
+
+indicators(tmidmod[,sel], cluster=IndicClusters, group="1",At=0.5,Bt=0.2, verbose=TRUE)
+wetpt = multipatt(tmidmod, IndicClusters, )
 
 ### Finding Maximum Site for each Module
 hist(apply(Combined_Sig_Modules.zs, 1, which.max))
@@ -850,8 +882,9 @@ setEPS()
 postscript("../Figures/Figure5.eps", width = 15, height=15, pointsize=12,paper="special")
 #par(mfrow=c(1,3))
 plot(Module.pcoa$points[,1], Module.pcoa$points[,2],cex=4, bg=class, pch=21, main= "rpoB Relativized Bray Curtis KEGG Module PCoA", xlab= paste("PCoA1: ",100*round(M_ax1.v,3),"% var. explained",sep=""), ylab= paste("PCoA2: ",100* round(M_ax2.v,3),"% var. explained",sep=""))
-#textxy(X=Module.pcoa$points[,1],Y=Module.pcoa$points[,2], lab=map_MG$Sample,cex=2)
+textxy(X=Module.pcoa$points[,1],Y=Module.pcoa$points[,2], lab=map_MG$Sample,cex=2)
 M_env<- envfit(Module.pcoa,env)
+M_moduleenv <- envfit(Module.pcoa, t(mid_mod))
 plot(M_env, p.max=0.05, col="black")
 
 #plot(KO.pcoa$points[,1], KO.pcoa$points[,2],cex=3, bg=class, pch=21, main= "rpoB Relativized Bray Curtis KEGG Ortholog PCoA", xlab= paste("PCoA1: ",100*round(KO_ax1.v,3),"% var. explained",sep=""), ylab= paste("PCoA2: ",100* round(KO_ax2.v,3),"% var. explained",sep=""))

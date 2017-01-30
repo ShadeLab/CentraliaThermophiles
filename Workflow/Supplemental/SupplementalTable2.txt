@@ -1,0 +1,277 @@
+Module Description	Completeness	T Statistic	T Degrees Freedom	T-test p value	Pearson's Rho	Pearson Degrees Freedom	Pearson p value
+M00376	3-Hydroxypropionate bi-cycle	1	3.905	5.677	0.009	0.633	10	0.027
+M00254	ABC-2 type transport system	1	4.016	9.485	0.003	0.84	10	0.001
+M00049	Adenine ribonucleotide biosynthesis, IMP => ADP,ATP	0.556	4.71	6.226	0.003	0.794	10	0.002
+M00064	ADP-L-glycero-D-manno-heptose biosynthesis	1	4.897	6.519	0.002	0.735	10	0.006
+M00359	Aminoacyl-tRNA biosynthesis, eukaryotes	0.955	4.069	6.075	0.006	0.858	10	0
+M00360	Aminoacyl-tRNA biosynthesis, prokaryotes	0.935	4.325	6.65	0.004	0.869	10	0
+M00613	Anoxygenic photosynthesis in green nonsulfur bacteria	1	2.779	6.166	0.031	0.462	10	0.13
+M00614	Anoxygenic photosynthesis in green sulfur bacteria	0.851	3.276	6.412	0.015	0.672	10	0.017
+M00612	Anoxygenic photosynthesis in purple bacteria	0.72	3.313	5.972	0.016	0.952	10	0
+M00602	Arabinosaccharide transport system	1	2.459	8.879	0.037	0.211	10	0.511
+M00129	Ascorbate biosynthesis, animals, glucose-1P => ascorbate	0.714	3.283	8.305	0.011	0.575	10	0.05
+M00114	Ascorbate biosynthesis, plants, glucose-6P => ascorbate	0.7	4.271	7.341	0.003	0.87	10	0
+M00531	Assimilatory nitrate reduction, nitrate => ammonia	0.667	5.631	5.885	0.001	0.737	10	0.006
+M00176	Assimilatory sulfate reduction, sulfate => H2S	0.75	3.559	6.728	0.01	0.911	10	0
+M00450	BaeS-BaeR (envelope stress response) two-component regulatory system	1	3.28	9.862	0.008	0.688	10	0.013
+M00540	Benzoate degradation, cyclohexanecarboxylic acid =>pimeloyl-CoA	1	3.082	7.449	0.016	0.847	10	0.001
+M00087	beta-Oxidation	0.737	3.938	7.128	0.005	0.719	10	0.008
+M00573	Biotin biosynthesis, BioI pathway, long-chain-acyl-ACP => pimeloyl-ACP => biotin	0.833	3.866	7.091	0.006	0.856	10	0
+M00577	Biotin biosynthesis, BioW pathway, pimelate => pimeloyl-CoA => biotin	0.833	3.866	7.091	0.006	0.856	10	0
+M00123	Biotin biosynthesis, pimeloyl-ACP/CoA => biotin	0.667	4.018	7.244	0.005	0.878	10	0
+M00543	Biphenyl degradation, biphenyl => 2-oxopent-4-enoate + benzoate	1	2.558	8.564	0.032	0.411	10	0.184
+M00237	Branched-chain amino acid transport system	1	4.26	5.778	0.006	0.801	10	0.002
+M00141	C1-unit interconversion, eukaryotes	0.5	3.759	5.872	0.01	0.869	10	0
+M00140	C1-unit interconversion, prokaryotes	1	4.99	6.052	0.002	0.857	10	0
+M00365	C10-C20 isoprenoid biosynthesis, archaea	1	2.99	5.824	0.025	0.932	10	0
+M00364	C10-C20 isoprenoid biosynthesis, bacteria	1	3.458	6.098	0.013	0.888	10	0
+M00367	C10-C20 isoprenoid biosynthesis, non-plant eukaryotes	0.333	3.362	5.709	0.016	0.942	10	0
+M00366	C10-C20 isoprenoid biosynthesis, plants	0.5	4.262	5.33	0.007	0.789	10	0.002
+M00172	C4-dicarboxylic acid cycle, NADP - malic enzyme type	0.75	2.478	8.978	0.035	0.578	10	0.049
+M00170	C4-dicarboxylic acid cycle, phosphoenolpyruvate carboxykinase type	0.5	3.484	8.281	0.008	0.681	10	0.015
+M00095	C5 isoprenoid biosynthesis, mevalonate pathway	0.875	4.109	5.534	0.007	0.942	10	0
+M00096	C5 isoprenoid biosynthesis, non-mevalonate pathway	0.9	4.08	6.95	0.005	0.717	10	0.009
+M00168	CAM (Crassulacean acid metabolism), dark	0.5	3.637	6.516	0.009	0.797	10	0.002
+M00249	Capsular polysaccharide transport system	1	3.122	5.863	0.021	0.7	10	0.011
+M00544	Carbazole degradation, carbazole => 2-oxopent-4-enoate + anthranilate	0.833	3.342	6.497	0.014	0.435	10	0.158
+M00569	Catechol meta-cleavage, catechol => acetyl-CoA / 4-methylcatechol => propanoyl-CoA	1	2.531	6.811	0.04	0.639	10	0.025
+M00725	Cationic antimicrobial peptide (CAMP) resistance, dltABCD operon	0.667	3.015	5.663	0.025	0.54	10	0.07
+M00506	CheA-CheYBV (chemotaxis) two-component regulatory system	1	2.889	8.686	0.019	0.443	10	0.149
+M00077	Chondroitin sulfate degradation	1	2.514	9.531	0.032	0.429	10	0.164
+M00507	ChpA-ChpB/PilGH (chemosensory) two-component regulatory system	1	2.671	6.779	0.033	0.697	10	0.012
+M00009	Citrate cycle (TCA cycle, Krebs cycle)	0.769	4.37	5.276	0.006	0.687	10	0.014
+M00010	Citrate cycle, first carbon oxidation, oxaloacetate => 2-oxoglutarate	1	3.234	5.976	0.018	0.839	10	0.001
+M00122	Cobalamin biosynthesis, cobinamide => cobalamin	0.889	3.72	9.605	0.004	0.752	10	0.005
+M00245	Cobalt/nickel transport system	1	3.962	6.061	0.007	0.557	10	0.06
+M00120	Coenzyme A biosynthesis, pantothenate => CoA	0.909	3.942	5.149	0.01	0.944	10	0
+M00358	Coenzyme M biosynthesis	1	3.67	6.333	0.009	0.519	10	0.084
+M00452	CusS-CusR (copper tolerance) two-component regulatory system	1	4.107	7.189	0.004	0.735	10	0.006
+M00338	Cysteine biosynthesis, homocysteine + serine => cysteine	0.667	2.761	7.949	0.025	0.776	10	0.003
+M00021	Cysteine biosynthesis, serine => cysteine	0.6	4.396	5.432	0.006	0.84	10	0.001
+M00151	Cytochrome bc1 complex respiratory unit	1	4.247	8.769	0.002	0.83	10	0.001
+M00155	Cytochrome c oxidase, prokaryotes	1	3.125	5.691	0.022	0.536	10	0.073
+M00552	D-galactonate degradation, De Ley-Doudoroff pathway, D-galactonate => glycerate-3P	1	3.691	6.677	0.008	0.81	10	0.001
+M00061	D-Glucuronate degradation, D-glucuronate => pyruvate + D-glyceraldehyde 3P	0.857	2.532	6.322	0.043	0.692	10	0.013
+M00489	DctS-DctR (C4-dicarboxylate transport) two-component regulatory system	1	2.685	5.801	0.038	0.632	10	0.027
+M00529	Denitrification, nitrate => nitrogen	0.917	2.721	5.195	0.04	0.942	10	0
+M00374	Dicarboxylate-hydroxybutyrate cycle	0.917	2.702	6.245	0.034	0.849	10	0
+M00530	Dissimilatory nitrate reduction, nitrate => ammonia	1	3.217	5.547	0.02	0.915	10	0
+M00596	Dissimilatory sulfate reduction, sulfate => H2S	1	2.629	5.005	0.047	0.892	10	0
+M00261	DNA polymerase alpha / primase complex	0.25	3.218	5.022	0.023	0.875	10	0
+M00264	DNA polymerase II complex, archaea	1	2.675	5.328	0.041	0.81	10	0.001
+M00260	DNA polymerase III complex, bacteria	0.818	3.134	7.174	0.016	0.489	10	0.107
+M00008	Entner-Doudoroff pathway, glucose-6P => glyceraldehyde-3P + pyruvate	1	3.103	6.263	0.02	0.632	10	0.028
+M00368	Ethylene biosynthesis, methionine => ethylene	0.667	3.944	5.828	0.008	0.834	10	0.001
+M00390	Exosome, archaea	1	2.693	5.009	0.043	0.92	10	0
+M00391	Exosome, eukaryotes	0.5	2.662	5.008	0.045	0.918	10	0
+M00157	F-type ATPase, prokaryotes and chloroplasts	1	5.312	8.864	0.001	0.814	10	0.001
+M00378	F420 biosynthesis	1	4.048	6.34	0.006	0.812	10	0.001
+M00413	FA core complex	0.1	2.888	5.087	0.034	0.919	10	0
+M00082	Fatty acid biosynthesis, initiation	0.571	3.159	5.749	0.021	0.587	10	0.045
+M00729	Fluoroquinolone resistance, gyrase-protecting protein Qnr	0.667	3.668	6.344	0.009	0.677	10	0.016
+M00345	Formaldehyde assimilation, ribulose monophosphate pathway	0.857	2.801	5.124	0.037	0.659	10	0.02
+M00346	Formaldehyde assimilation, serine pathway	1	3.575	6.189	0.011	0.834	10	0.001
+M00344	Formaldehyde assimilation, xylulose monophosphate pathway	0.75	4.133	5.884	0.006	0.939	10	0
+M00135	GABA biosynthesis, eukaryotes, putrescine => GABA	0.6	3.082	6.044	0.021	0.432	10	0.161
+M00632	Galactose degradation, Leloir pathway, galactose => alpha-D-glucose-1P	1	3.104	6.287	0.02	0.713	10	0.009
+M00669	gamma-Hexachlorocyclohexane transport system	0.75	4.34	7.547	0.003	0.7	10	0.011
+M00003	Gluconeogenesis, oxaloacetate => fructose-6P	1	4.335	8.911	0.002	0.857	10	0
+M00002	Glycolysis, core module involving three-carbon compounds	0.917	4.656	6.544	0.003	0.802	10	0.002
+M00012	Glyoxylate cycle	0.667	4.744	7.976	0.001	0.809	10	0.001
+M00050	Guanine ribonucleotide biosynthesis IMP => GDP,GTP	0.833	5.589	9.685	0	0.642	10	0.024
+M00425	H/ACA ribonucleoprotein complex	0.5	2.621	5.009	0.047	0.939	10	0
+M00121	Heme biosynthesis, glutamate => protoheme/siroheme	0.826	3.916	6.304	0.007	0.801	10	0.002
+M00259	Heme transport system	1	4.04	5.667	0.008	0.631	10	0.028
+M00026	Histidine biosynthesis, PRPP => histidine	0.789	4.896	5.443	0.004	0.87	10	0
+M00045	Histidine degradation, histidine => N-formiminoglutamate => glutamate	1	3.259	9.971	0.009	0.622	10	0.031
+M00290	Holo-TFIIH complex	0.2	3.801	8.833	0.004	0.596	10	0.041
+M00375	Hydroxypropionate-hydroxybutylate cycle	0.842	3.831	5.046	0.012	0.842	10	0.001
+M00620	Incomplete reductive citrate cycle, acetyl-CoA => oxoglutarate	0.882	3.959	6.928	0.006	0.716	10	0.009
+M00048	Inosine monophosphate biosynthesis, PRPP + glutamine => IMP	0.72	4.832	7.151	0.002	0.846	10	0.001
+M00131	Inositol phosphate metabolism, Ins(1,3,4,5)P4 => Ins(1,3,4)P3 => myo-inositol	0.125	4.231	5.755	0.006	0.737	10	0.006
+M00593	Inositol transport system	1	-2.716	9.063	0.024	-0.721	10	0.008
+M00240	Iron complex transport system	1	4.337	9.8	0.002	0.741	10	0.006
+M00190	Iron(III) transport system	1	2.457	7.274	0.042	0.318	10	0.314
+M00535	Isoleucine biosynthesis, pyruvate => 2-oxobutanoate	1	3.412	5.59	0.016	0.659	10	0.02
+M00570	Isoleucine biosynthesis, threonine => 2-oxobutanoate => isoleucine	1	4.334	6.252	0.004	0.811	10	0.001
+M00454	KdpD-KdpE (potassium transport) two-component regulatory system	1	2.988	8.643	0.016	0.545	10	0.067
+M00088	Ketone body biosynthesis, acetyl-CoA => acetoacetate/3-hydroxybutyrate/acetone	1	3.711	6.165	0.009	0.796	10	0.002
+M00505	KinB-AlgB (alginate production) two-component regulatory system	1	3.545	5.664	0.013	0.475	10	0.119
+M00066	Lactosylceramide biosynthesis	0.5	2.536	6.749	0.04	0.67	10	0.017
+M00432	Leucine biosynthesis, 2-oxoisovalerate => 2-oxoisocaproate	1	3.267	5.756	0.018	0.606	10	0.037
+M00036	Leucine degradation, leucine => acetoacetate + acetyl-CoA	1	2.863	5.321	0.033	0.535	10	0.073
+M00481	LiaS-LiaR (cell wall stress response) two-component regulatory system	1	3.394	9.105	0.008	0.546	10	0.066
+M00080	Lipopolysaccharide biosynthesis, inner core => outer core => O-antigen	1	3.122	8.489	0.013	0.354	10	0.259
+M00060	Lipopolysaccharide biosynthesis, KDO2-lipid A	1	3.038	6.319	0.021	0.568	10	0.054
+M00320	Lipopolysaccharide export system	1	4.521	8.604	0.002	0.768	10	0.004
+M00250	Lipopolysaccharide transport system	1	3.707	5.826	0.011	0.437	10	0.155
+M00525	Lysine biosynthesis, acetyl-DAP pathway, aspartate => lysine	1	4.922	5.993	0.003	0.811	10	0.001
+M00527	Lysine biosynthesis, DAP aminotransferase pathway, aspartate => lysine	0.909	5.174	5.909	0.002	0.813	10	0.001
+M00526	Lysine biosynthesis, DAP dehydrogenase pathway, aspartate => lysine	0.9	4.922	5.993	0.003	0.811	10	0.001
+M00031	Lysine biosynthesis, mediated by LysW, 2-aminoadipate => lysine	1	2.773	5.253	0.037	0.892	10	0
+M00016	Lysine biosynthesis, succinyl-DAP pathway, aspartate => lysine	0.929	4.85	5.761	0.003	0.855	10	0
+M00032	Lysine degradation, lysine => saccharopine => acetoacetyl-CoA	0.611	2.767	5.404	0.036	0.799	10	0.002
+M00013	Malonate semialdehyde pathway, propanoyl-CoA => acetyl-CoA	0.667	3.353	8.316	0.009	0.564	10	0.056
+M00243	Manganese/iron transport system	1	2.78	5.473	0.035	0.643	10	0.024
+M00465	ManS-ManR (manganese homeostasis) two-component regulatory system	1	2.509	5.505	0.05	0.455	10	0.137
+M00670	Mce transport system	0.75	4.34	7.547	0.003	0.7	10	0.011
+M00116	Menaquinone biosynthesis, chorismate => menaquinone	0.917	2.91	9.71	0.016	0.854	10	0
+M00357	Methanogenesis, acetate => methane	0.714	2.675	9.985	0.023	0.635	10	0.027
+M00567	Methanogenesis, CO2 => methane	0.704	2.881	6.197	0.027	0.584	10	0.046
+M00035	Methionine degradation	0.714	2.738	9.978	0.021	0.695	10	0.012
+M00740	Methylaspartate cycle	0.667	3.854	5.843	0.009	0.83	10	0.001
+M00189	Molybdate transport system	1	3.332	5.741	0.017	0.505	10	0.094
+M00460	MprB-MprA (maintenance of persistent infection) two-component regulatory system	1	3.148	7.129	0.016	0.61	10	0.035
+M00647	Multidrug resistance, efflux pump AcrAB-TolC/SmeDEF	0.818	2.837	7.654	0.023	0.592	10	0.043
+M00646	Multidrug resistance, efflux pump AcrAD-TolC	1	3.347	9.708	0.008	0.72	10	0.008
+M00639	Multidrug resistance, efflux pump MexCD-OprJ	1	-2.68	9.999	0.023	-0.754	10	0.005
+M00298	Multidrug/hemolysin transport system	1	-2.234	9.991	0.049	-0.55	10	0.064
+M00072	N-glycosylation by oligosaccharyltransferase	0.125	3.502	5.964	0.013	0.857	10	0
+M00115	NAD biosynthesis, aspartate => NAD	0.857	4.585	5.54	0.005	0.731	10	0.007
+M00145	NAD(P)H:quinone oxidoreductase, chloroplasts and cyanobacteria	1	2.675	6.456	0.034	0.723	10	0.008
+M00144	NADH:quinone oxidoreductase, prokaryotes	0.944	4.153	5.695	0.007	0.696	10	0.012
+M00471	NarX-NarL (nitrate respiration) two-component regulatory system	1	3.454	5.718	0.015	0.592	10	0.043
+M00246	Nickel transport system	1	3.832	5.754	0.009	0.541	10	0.069
+M00188	NitT/TauT family transport system	1	5.214	7.263	0.001	0.832	10	0.001
+M00483	NreB-NreC (dissimilatory nitrate/nitrite reduction) two-component regulatory system	1	3.047	6.148	0.022	0.511	10	0.09
+M00361	Nucleotide sugar biosynthesis, eukaryotes	0.857	3.505	8.02	0.008	0.707	10	0.01
+M00554	Nucleotide sugar biosynthesis, galactose => UDP-galactose	1	2.939	6.384	0.024	0.654	10	0.021
+M00549	Nucleotide sugar biosynthesis, glucose => UDP-glucose	0.833	2.375	8.227	0.044	0.403	10	0.193
+M00362	Nucleotide sugar biosynthesis, prokaryotes	1	3.426	6.496	0.012	0.723	10	0.008
+M00028	Ornithine biosynthesis, glutamate => ornithine	0.714	2.811	5.471	0.034	0.569	10	0.054
+M00763	Ornithine biosynthesis, mediated by LysW, glutamate => ornithine	0.833	2.795	5.23	0.036	0.893	10	0
+M00209	Osmoprotectant transport system	1	4.166	5.776	0.006	0.787	10	0.002
+M00611	Oxygenic photosynthesis in plants and cyanobacteria	0.8	3.584	5.144	0.015	0.66	10	0.019
+M00119	Pantothenate biosynthesis, valine/L-aspartate => pantothenate	1	3.828	5.702	0.01	0.7	10	0.011
+M00004	Pentose phosphate pathway (Pentose phosphate cycle)	0.867	3.168	6.651	0.017	0.653	10	0.021
+M00007	Pentose phosphate pathway, non-oxidative phase, fructose 6P => ribose 5P	1	3.64	5.92	0.011	0.774	10	0.003
+M00006	Pentose phosphate pathway, oxidative phase, glucose 6P => ribulose 5P	0.667	3.192	7.132	0.015	0.704	10	0.011
+M00239	Peptides/nickel transport system	1	3.845	8.042	0.005	0.831	10	0.001
+M00434	PhoR-PhoB (phosphate starvation response) two-component regulatory system	1	3.237	6.292	0.017	0.473	10	0.121
+M00222	Phosphate transport system	1	4.453	6.401	0.004	0.856	10	0
+M00090	Phosphatidylcholine (PC) biosynthesis, choline => PC	0.2	-2.689	7.002	0.031	-0.547	10	0.066
+M00091	Phosphatidylcholine (PC) biosynthesis, PE => PC	0.25	2.519	5.676	0.048	0.409	10	0.186
+M00093	Phosphatidylethanolamine (PE) biosynthesis, PA => PS => PE	1	2.558	6.202	0.042	0.379	10	0.224
+M00210	Phospholipid transport system	1	4.485	9.962	0.001	0.633	10	0.027
+M00572	Pimeloyl-ACP biosynthesis, BioC-BioH pathway, malonyl-ACP => pimeloyl-ACP	0.8	2.851	5.877	0.03	0.461	10	0.131
+M00133	Polyamine biosynthesis, arginine => agmatine => putrescine => spermidine	1	2.395	7.197	0.047	0.68	10	0.015
+M00741	Propanoyl-CoA metabolism, propanoyl-CoA => succinyl-CoA	0.846	4.278	5.444	0.007	0.789	10	0.002
+M00005	PRPP biosynthesis, ribose 5P => PRPP	1	4.944	6.34	0.002	0.888	10	0
+M00275	PTS system, cellobiose-specific II component	1	3.113	5.278	0.025	0.785	10	0.003
+M00267	PTS system, N-acetylglucosamine-specific II component	1	2.834	5.184	0.035	0.635	10	0.026
+M00442	Putative hydroxymethylpyrimidine transport system	1	2.901	6.936	0.023	0.684	10	0.014
+M00207	Putative multiple sugar transport system	1	3.627	9.974	0.005	0.706	10	0.01
+M00236	Putative polar amino acid transport system	1	3.047	6.522	0.02	0.537	10	0.072
+M00193	Putative spermidine/putrescine transport system	1	2.574	7.448	0.035	0.403	10	0.194
+M00244	Putative zinc/manganese transport system	1	4.03	7.611	0.004	0.63	10	0.028
+M00124	Pyridoxal biosynthesis, erythrose-4P => pyridoxal-5P	1	3.786	7.327	0.006	0.503	10	0.096
+M00053	Pyrimidine deoxyribonuleotide biosynthesis, CDP/CTP => dCDP/dCTP,dTDP/dTTP	0.714	4.712	7.793	0.002	0.872	10	0
+M00052	Pyrimidine ribonucleotide biosynthesis, UMP => UDP/UTP,CDP/CTP	0.571	4.769	5.885	0.003	0.857	10	0
+M00196	Raffinose/stachyose/melibiose transport system	1	2.309	9.999	0.044	0.782	10	0.003
+M00339	RaxAB-RaxC type I secretion system	1	-2.603	9.539	0.027	-0.461	10	0.131
+M00474	RcsC-RcsD-RcsB (capsule synthesis) two-component regulatory system	1	-2.356	9.999	0.04	-0.523	10	0.081
+M00173	Reductive citrate cycle (Arnon-Buchanan cycle)	0.86	3.576	6.739	0.01	0.691	10	0.013
+M00165	Reductive pentose phosphate cycle (Calvin cycle)	0.696	3.414	7.901	0.009	0.89	10	0
+M00166	Reductive pentose phosphate cycle, ribulose-5P => glyceraldehyde-3P	0.857	3.008	5.366	0.027	0.924	10	0
+M00458	ResE-ResD (aerobic and anaerobic respiration) two-component regulatory system	1	2.921	9.193	0.017	0.544	10	0.067
+M00125	Riboflavin biosynthesis, GTP => riboflavin/FMN/FAD	0.75	4.662	5.58	0.004	0.746	10	0.005
+M00179	Ribosome, archaea	0.985	2.608	5.008	0.048	0.915	10	0
+M00178	Ribosome, bacteria	1	4.785	5.687	0.004	0.832	10	0.001
+M00394	RNA degradosome	1	4.355	8.888	0.002	0.649	10	0.022
+M00184	RNA polymerase, archaea	0.875	2.626	5.003	0.047	0.912	10	0
+M00183	RNA polymerase, bacteria	1	4.168	5.537	0.007	0.669	10	0.017
+M00288	RPA complex	0.25	2.895	5.032	0.034	0.949	10	0
+M00638	Salicylate degradation, salicylate => gentisate	1	2.926	5.252	0.031	0.593	10	0.042
+M00335	Sec (secretion) system	1	2.734	6.635	0.031	0.637	10	0.026
+M00308	Semi-phosphorylative Entner-Doudoroff pathway, gluconate => glycerate-3P	0.857	3.501	6.606	0.011	0.708	10	0.01
+M00022	Shikimate pathway, phosphoenolpyruvate + erythrose-4P => chorismate	0.8	5.327	7.144	0.001	0.784	10	0.003
+M00392	Ski complex	0.25	2.94	5.175	0.031	0.631	10	0.028
+M00099	Sphingosine biosynthesis	0.5	2.597	5.539	0.044	0.298	10	0.347
+M00149	Succinate dehydrogenase, prokaryotes	1	4.745	5.965	0.003	0.817	10	0.001
+M00616	Sulfate-sulfur assimilation	0.812	5.863	9.144	0	0.795	10	0.002
+M00668	Tetracycline resistance, TetA transporter	0.5	4.104	8.295	0.003	0.542	10	0.069
+M00127	Thiamine biosynthesis, AIR => thiamine-P/thiamine-2P	0.7	4.057	5.763	0.007	0.73	10	0.007
+M00018	Threonine biosynthesis, aspartate => homoserine => threonine	0.833	4.19	5.362	0.007	0.846	10	0.001
+M00565	Trehalose biosynthesis, D-glucose 1P => trehalose	1	5.351	9.128	0	0.679	10	0.015
+M00023	Tryptophan biosynthesis, chorismate => tryptophan	0.688	4.802	5.73	0.003	0.847	10	0.001
+M00186	Tungstate transport system	1	4.063	5.839	0.007	0.393	10	0.206
+M00336	Twin-arginine translocation (Tat) system	1	4.91	7.796	0.001	0.809	10	0.001
+M00331	Type II general secretion pathway	1	3.053	5.748	0.024	0.481	10	0.114
+M00117	Ubiquinone biosynthesis, prokaryotes, chorismate => ubiquinone	0.818	4.979	5.314	0.004	0.755	10	0.005
+M00473	UhpB-UhpA (hexose phosphates uptake) two-component regulatory system	1	2.541	9.824	0.03	0.429	10	0.165
+M00029	Urea cycle	0.833	3.295	5.575	0.018	0.75	10	0.005
+M00051	Uridine monophosphate biosynthesis, glutamine (+ PRPP) => UMP	0.812	3.893	5.445	0.01	0.83	10	0.001
+M00159	V/A-type ATPase, prokaryotes	1	3.122	5.018	0.026	0.893	10	0
+M00019	Valine/isoleucine biosynthesis, pyruvate => valine / 2-oxobutanoate => isoleucine	1	4.339	6.144	0.005	0.829	10	0.001
+M00480	VraS-VraR (cell-wall peptidoglycan synthesis) two-component regulatory system	1	-2.837	5.246	0.034	-0.56	10	0.058
+M00509	WspE-WspRF (chemosensory) two-component regulatory system	1	-2.486	9.016	0.035	-0.739	10	0.006
+M00484	YdfH-YdfI two-component regulatory system	1	3.846	7.685	0.005	0.761	10	0.004
+M00519	YesM-YesN two-component regulatory system	1	3.453	9.462	0.007	0.736	10	0.006
+M00242	Zinc transport system	1	3.376	6.698	0.013	0.548	10	0.065
+M00219	AI-2 transport system	1	0.485	5.423	0.647	0.61	10	0.035
+M00597	Anoxygenic photosystem II	1	2.229	5.321	0.073	0.59	10	0.043
+M00343	Archaeal proteasome	1	2.325	5.178	0.066	0.883	10	0
+M00235	Arginine/ornithine transport system	1	-1.984	6.8	0.089	-0.582	10	0.047
+M00550	Ascorbate degradation, ascorbate => D-xylulose-5P	1	2.112	5.45	0.084	0.62	10	0.032
+M00342	Bacterial proteasome	1	1.947	5.468	0.104	0.835	10	0.001
+M00548	Benzene degradation, benzene => catechol	1	2.026	5.49	0.094	0.694	10	0.012
+M00627	beta-Lactam resistance, Bla system	0.75	-1.071	9.671	0.31	-0.647	10	0.023
+M00171	C4-dicarboxylic acid cycle, NAD - malic enzyme type	0.333	2.209	8.895	0.055	0.606	10	0.037
+M00042	Catecholamine biosynthesis, tyrosine => dopamine => noradrenaline => adrenaline	0.5	-0.961	6.796	0.369	-0.6	10	0.039
+M00722	Cationic antimicrobial peptide (CAMP) resistance,  phosphoethanolamine transferase PmrC	1	-2.093	9.733	0.064	-0.729	10	0.007
+M00256	Cell division transport system	1	2.22	6.232	0.067	0.597	10	0.04
+M00011	Citrate cycle, second carbon oxidation, 2-oxoglutarate => oxaloacetate	0.735	2.217	6.784	0.063	0.579	10	0.048
+M00510	Cph1-Rcp1 (light response) two-component regulatory system	1	2.475	5.556	0.051	0.799	10	0.002
+M00609	Cysteine biosynthesis, methionine => cysteine	1	1.477	5.157	0.198	0.609	10	0.035
+M00416	Cytochrome aa3-600 menaquinol oxidase	1	1.535	5.259	0.183	0.691	10	0.013
+M00162	Cytochrome b6f complex	0.75	1.411	5.145	0.216	0.682	10	0.015
+M00153	Cytochrome d ubiquinol oxidase	1	2.429	5.767	0.053	0.777	10	0.003
+M00631	D-Galacturonate degradation (bacteria), D-galacturonate => pyruvate + D-glyceraldehyde 3P	0.875	-1.483	9.987	0.169	-0.636	10	0.026
+M00479	DesK-DesR (membrane lipid fluidity regulation) two-component regulatory system	1	1.736	9.999	0.113	0.663	10	0.019
+M00482	DevS-DevR (redox response) two-component regulatory system	1	1.657	8.49	0.134	0.591	10	0.043
+M00033	Ectoine biosynthesis, aspartate => ectoine	1	1.853	7.401	0.104	0.609	10	0.036
+M00582	Energy-coupling factor transport system	1	2.139	9.042	0.061	0.666	10	0.018
+M00027	GABA (gamma-Aminobutyrate) shunt	0.857	2.007	7.541	0.082	0.62	10	0.032
+M00136	GABA biosynthesis, prokaryotes, putrescine => GABA	1	-2.264	7.841	0.054	-0.738	10	0.006
+M00203	Glucose/arabinose transport system	1	1.104	5	0.32	0.736	10	0.006
+M00230	Glutamate/aspartate transport system	1	-1.706	7.011	0.132	-0.761	10	0.004
+M00607	Glycerol transport system	1	-1.068	8.445	0.315	-0.643	10	0.024
+M00208	Glycine betaine/proline transport system	1	-1.297	7.784	0.232	-0.638	10	0.026
+M00001	Glycolysis (Embden-Meyerhof pathway), glucose => pyruvate	0.867	2.117	7.217	0.071	0.795	10	0.002
+M00328	Hemophore/metalloprotease transport system	1	-1.997	9.816	0.074	-0.658	10	0.02
+M00662	Hk1-Rrp1 (glycerol uptake and utilization) two-component regulatory system	0.5	-1.329	7.62	0.222	-0.755	10	0.005
+M00403	HRD1/SEL1 ERAD complex	0.182	2.505	5.337	0.051	0.914	10	0
+M00113	Jasmonic acid biosynthesis	0.444	2.047	7.598	0.077	0.714	10	0.009
+M00490	MalK-MalR (malate transport) two-component regulatory system	1	2.229	5.044	0.076	0.621	10	0.031
+M00423	Molybdate/tungstate transport system	1	2.168	5.104	0.081	0.882	10	0
+M00641	Multidrug resistance, efflux pump MexEF-OprN	1	-0.528	7.282	0.613	-0.584	10	0.046
+M00717	Multidrug resistance, efflux pump NorA	0.25	2.279	8.294	0.051	0.63	10	0.028
+M00216	Multiple sugar transport system	1	-1.142	6.719	0.293	-0.705	10	0.011
+M00309	Non-phosphorylative Entner-Doudoroff pathway, gluconate/galactonate => glycerate	1	1.424	5.026	0.214	0.714	10	0.009
+M00400	p97-Ufd1-Npl4 complex	0.333	2.504	5.334	0.051	0.914	10	0
+M00081	Pectin degradation	1	2.449	5.902	0.051	0.746	10	0.005
+M00672	Penicillin biosynthesis, aminoadipate + cycteine + valine => penicillin	1	-1.678	8.72	0.129	-0.631	10	0.028
+M00580	Pentose phosphate pathway, archaea, fructose 6P => ribose 5P	0.8	2.455	5.191	0.056	0.635	10	0.027
+M00163	Photosystem I	1	1.687	5.141	0.151	0.6	10	0.039
+M00161	Photosystem II	1	1.548	5.19	0.18	0.622	10	0.031
+M00623	Phthalate degradation, phthalate => protocatechuate	1	2.101	5.094	0.089	0.795	10	0.002
+M00283	PTS system, ascorbate-specific II component	1	1.751	5.379	0.136	0.599	10	0.04
+M00591	Putative xylitol transport system	1	-2.206	6.379	0.067	-0.588	10	0.045
+M00167	Reductive pentose phosphate cycle, glyceraldehyde-3P => ribulose-5P	0.625	2.119	8.795	0.064	0.639	10	0.025
+M00177	Ribosome, eukaryotes	0.671	2.322	5.002	0.068	0.928	10	0
+M00182	RNA polymerase I, eukaryotes	0.071	2.531	5.006	0.052	0.95	10	0
+M00180	RNA polymerase II, eukaryotes	0.083	2.531	5.006	0.052	0.95	10	0
+M00181	RNA polymerase III, eukaryotes	0.062	2.531	5.006	0.052	0.95	10	0
+M00446	RstB-RstA two-component regulatory system	1	-2.211	7.683	0.059	-0.862	10	0
+M00401	Sec61 complex	0.333	2.462	5.001	0.057	0.693	10	0.012
+M00633	Semi-phosphorylative Entner-Doudoroff pathway, gluconate/galactonate => glycerate-3P	0.8	2.393	5.105	0.061	0.83	10	0.001
+M00436	Sulfonate transport system	1	1.621	5.386	0.162	0.621	10	0.031
+M00435	Taurine transport system	1	2.15	5.138	0.083	0.759	10	0.004
+M00251	Teichoic acid transport system	1	-1.566	7.505	0.159	-0.578	10	0.049
+M00545	Trans-cinnamate degradation, trans-cinnamate => acetyl-CoA	1	2.17	6.595	0.069	0.63	10	0.028
+M00604	Trehalose transport system	1	2.155	5.037	0.083	0.883	10	0
+M00204	Trehalose/maltose transport system	1	-1.022	8.508	0.335	-0.597	10	0.04
+M00333	Type IV secretion system	1	2.108	7.122	0.072	0.593	10	0.042
+M00025	Tyrosine biosynthesis, chorismate => tyrosine	0.857	-1.528	8.602	0.162	-0.599	10	0.039
+M00040	Tyrosine biosynthesis, prephanate => pretyrosine => tyrosine	0.6	-1.691	10	0.122	-0.636	10	0.026
+M00644	Vanadium resistance, efflux pump MexGHI-OpmD	1	-1.683	9.932	0.123	-0.641	10	0.025

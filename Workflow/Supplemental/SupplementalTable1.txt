@@ -1,0 +1,1 @@
+Distance 1	Distance 2	Mantel R	Mantel p	Procrustes m12	Procrustes Correlation	Procrustes p16S Weighted Unifrac	KEGG Ortholog Bray Curtis	0.6813	0.001	0.3473	0.8079	0.00216S Weighted Unifrac	KEGG Module Bray Curtis	0.669	0.001	0.3398	0.8125	0.001KEGG Ortholog Bray Curtis	KEGG Module Bray Curtis	0.9954	0.001	0.004707	0.9976	0.001
