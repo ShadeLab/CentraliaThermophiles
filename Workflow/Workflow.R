@@ -48,6 +48,15 @@ for (i in 1:nrow(KO)){
 
 row.names(KO.rpob) <- sub("KO:", "", row.names(KO.rpob))
 
+# Relativize to rpsM
+KO.rpsM <- NULL
+for(i in 1:nrow(KO)){
+  KO.rpsM<- rbind(KO.rpsM, KO[i,]/KO["KO:K02952",])
+}
+row.names(KO.rpsM) <- sub("KO:","", row.names(KO.rpsM))
+#Relativized to KO count
+KO.rel <- decostand(x=KO, method="total", MARGIN=2)
+row.names(KO.rel) <- sub("KO:","",row.names(KO.rel))
 ### Venn Analysis 16S 
 #source("http://www.bioconductor.org/biocLite.R")
 #biocLite("limma")
@@ -191,7 +200,7 @@ fit <- lm(map$PercentDeNovo ~ map$SoilMoisture_Per)
 summary(fit)
 anova(fit)
 
-
+grepl()
 ### Broken
 #fig2=ggplot(map.long, aes(y=as.numeric(SoilTemperature_to10cm), x=value))
 #add points layer
@@ -237,86 +246,168 @@ Phyla_Therm <- sub("k__","",Phyla_Therm)
 Phyla_Therm <- sub(" p__", "", Phyla_Therm)
 Phyla_Therm <- gsub("\\[|\\]","", Phyla_Therm)
 
-Counts<- NULL
-Num_OTUs <- NULL
+#Counts<- NULL
+#Num_OTUs <- NULL
+#for (i in 1:length(Phyla_Therm)){
+ # Object <- Acomm_sigcor_pos[grep(Phyla_Therm[i],Taxonomy[,2]),] 
+  #Counts <- c(Counts, sum(Object[,1:18]))
+  #Num_OTUs <- c(Num_OTUs, nrow(Object))
+#}
+
+Counts_dn <- NULL
+Num_OTUs_dn <- NULL
+Counts_gg<- NULL
+Num_OTUs_gg <- NULL
 for (i in 1:length(Phyla_Therm)){
   Object <- Acomm_sigcor_pos[grep(Phyla_Therm[i],Taxonomy[,2]),] 
-  Counts <- c(Counts, sum(Object[,1:18]))
-  Num_OTUs <- c(Num_OTUs, nrow(Object))
+  Object_dn <- NULL
+  tryCatch({Object_dn <- Object[grep("dn",row.names(Object)),]},error=function(e){})
+  Object_gg <- NULL
+  tryCatch({Object_gg <- Object[grep("dn",row.names(Object),invert=TRUE),]},error=function(e){})
+  Counts_dn <- c(Counts_dn, tryCatch({sum(Object_dn[,1:18])},error=function(e){0}))
+  Counts_gg <- c(Counts_gg, tryCatch({sum(Object_gg[,1:18])},error=function(e){0}))
+  Num_OTUs_dn <- c(Num_OTUs_dn, nrow(Object_dn))
+  Num_OTUs_gg <- c(Num_OTUs_gg, nrow(Object_gg))
 }
 
-Phylum_Counts_Therm <- data.frame(matrix(NA, nrow = length(Phyla_Therm), ncol = 2))
-Phylum_Counts_Therm[,1] <- Phyla_Therm
-Phylum_Counts_Therm[,2] <- Counts
-colnames(Phylum_Counts_Therm) <- c("Phylum", "Reads")
-Phylum_Counts_Therm$Percentage_Therm <- Phylum_Counts_Therm[,2]/sum(Phylum_Counts_Therm[,2])
-sum(Phylum_Counts_Therm[,3])
+Proportion_OTUs <- c(Num_OTUs_gg,Num_OTUs_dn)/sum(c(Num_OTUs_gg,Num_OTUs_dn))
+Proportion_RA <- c(Counts_gg,Counts_dn)/sum(c(Counts_gg,Counts_dn))
 
-Phylum_OTUs_Therm <- data.frame(matrix(NA, nrow = length(Phyla_Therm), ncol = 2))
-Phylum_OTUs_Therm[,1] <- Phyla_Therm
-Phylum_OTUs_Therm[,2] <- Num_OTUs
-colnames(Phylum_OTUs_Therm) <- c("Phylum", "Number_of_Temperature_Responsive_OTUs")
-Phylum_OTUs_Therm$PercentageOTUs <- Phylum_OTUs_Therm[,2]/sum(Phylum_OTUs_Therm[,2])
-sum(Phylum_OTUs_Therm$PercentageOTUs)
-
-Phylum_Therm <- cbind(Phylum_Counts_Therm, Phylum_OTUs_Therm[,2:3])
-Phylum_Therm[,1] <- sub("p__", "", Phylum_Therm[,1])
-Phylum_Therm[,1] <- sub("k__", "", Phylum_Therm[,1])
-Phylum_Therm[,1] <- sub(" ", "", Phylum_Therm[,1])
-Phylum_Therm[5,1] <- "Unclassified_Bacteria"
-Phylum_Therm[42,1] <- "Unclassified_Archaea"
-
-# Read in Phylum Counts of genomes from (hyper)thermophiles in IMG 
 JGI_Therm <- read.table("JGI_Thermophile_Phylum_Counts_November9th.txt", sep="\t", stringsAsFactors = FALSE, header = FALSE)
 JGI_Therm$V3 <- JGI_Therm$V2/sum(JGI_Therm$V2)
 
-#Make combined Dataset
-Combined <- data.frame(matrix(NA, nrow = length(Phyla_Therm)+length(Phyla_Therm)+nrow(JGI_Therm), ncol = 3))
-Combined[,1] <- c(Phylum_Therm$Phylum, Phylum_Therm$Phylum, JGI_Therm[,1])
-Combined[,2] <- c(Phylum_Therm$Percentage_Therm, Phylum_Therm$PercentageOTUs, JGI_Therm[,3])
-Combined[,3]<-c(rep("RelativeAbundanceTherm",42),rep("PercentageThermophileOTUs",42),rep("JGI",28))
-Combined[,4]<-c(rep("A",42),rep("B",42),rep("C",28))
+Proportion <- c(Proportion_OTUs, Proportion_RA, JGI_Therm[,3])
 
-colnames(Combined) <- c("Phylum", "Proportion", "Category", "Text")
-Combined$Category_f <- factor(Combined$Text, levels=c("B","A","C"))
+Facet_Categories <- c(rep("A",84), rep("B",84), rep("C", nrow(JGI_Therm)))
+Fill_Categories <- c(rep("GG", 42), rep("DN",42), rep("GG", 42), rep("DN",42), rep("Genomes", nrow(JGI_Therm)))
 
-Combined$Phylum <- sub("Thermi", "Deinococcus-Thermus", Combined$Phylum)
+Phylum_Column <- c(rep(Phyla_Therm,4), JGI_Therm[,1])
+Phylum_Column <- sub("Thermi", "Deinococcus-Thermus",Phylum_Column)
 
-Names <- unique(Combined$Phylum)
-CA_P <- NULL
-CR_P <- NULL
-for(i in 1:length(Names)){
-  x <- Combined[grep(Names[i],Combined$Phylum, fixed=TRUE),]
-  if(sum(1*(x[,2]<=0.05))==nrow(x)){
-    CR_P <- rbind(CR_P, x)
+Plot_Data <- cbind(Phylum_Column,Fill_Categories)
+Plot_Data <- as.data.frame(Plot_Data)
+
+Plot_Data$Proportion <- Proportion
+Plot_Data$Facet_Categories <- Facet_Categories
+data.class(Plot_Data$Proportion)
+
+Plot_Data$Category_f <- factor(Plot_Data$Facet_Categories, levels=c("A","B","C"))
+
+Lumped_OTUs <- (Num_OTUs_gg+Num_OTUs_dn)/sum(c(Num_OTUs_gg,Num_OTUs_dn))
+Lumped_RA <- (Counts_gg+Counts_dn)/sum(c(Counts_gg,Counts_dn))
+
+Col1 <- c(rep(Phyla_Therm,2),JGI_Therm$V1)
+Col2 <- c(Lumped_OTUs,Lumped_RA, JGI_Therm$V3)
+Dummy_Matrix <- cbind(Col1,Col2)
+
+Phyla_A <- NULL
+Phyla_R <- NULL
+for(i in 1:length(unique(Col1))){
+  x <- Col2[grep(unique(Col1)[i], Col1)]
+  if(sum(1*(x<=0.05))==length(x)){
+    Phyla_R <- c(Phyla_R,unique(Col1)[i])
   }else{
-    CA_P <- rbind(CA_P,x)
+    Phyla_A <- c(Phyla_A, unique(Col1)[i])
   }
-    
-  }
+}
 
-row.names(CA_P) <- c(1:nrow(CA_P))
+
+
+PlotData_A <- NULL
+for(i in 1:length(Phyla_A)){
+  x <- Plot_Data[grep(Phyla_A[i],Plot_Data[,1]),]
+  PlotData_A <- rbind(PlotData_A,x)
+}
+
+PlotData_R <- NULL
+for(i in 1:length(Phyla_R)){
+  x <- Plot_Data[grep(Phyla_R[i],Plot_Data[,1]),]
+  PlotData_R <- rbind(PlotData_R,x)
+}
+
+data.class(PlotData_A$Proportion)
+
+cbPalette <- c("#f0f0f0", "#bdbdbd", "#636363")
+pa <- ggplot(data=PlotData_A, aes(x=Phylum_Column, y=Proportion, fill=Fill_Categories)) + geom_bar(stat="identity", aes(x=Phylum_Column, y=Proportion), colour="black") + facet_wrap(~Category_f, nrow=3, strip.position="right") + theme(strip.background = element_blank(), strip.text.y=element_blank(), axis.text.x = element_text(angle=60, hjust=1, vjust=1, lineheight = rel(2), size=10), axis.title.x= element_text(vjust=1),strip.text.x=element_text(size=rel(2)), axis.text.y=element_text(size=15)) + guides(fill=FALSE) + scale_fill_manual(values=cbPalette)
+pa
+ggsave("../Figures/Fig3A.eps", width=50, units="mm")
+
+pr <- ggplot(data=PlotData_R, aes(x=Phylum_Column, y=Proportion, fill=Fill_Categories)) + geom_bar(stat="identity", aes(x=Phylum_Column, y=Proportion), colour="black") + facet_wrap(~Category_f, nrow=3, strip.position="right") + theme(strip.background = element_blank(), strip.text.y=element_blank(), axis.text.x = element_text(angle=60, hjust=1, vjust=1, lineheight = rel(2), size=10), axis.title.x= element_text(vjust=1),strip.text.x=element_text(size=rel(2)), axis.text.y=element_text(size=15)) + guides(fill=FALSE) + scale_fill_manual(values=cbPalette)
+pr
+ggsave("../Figures/Fig3B.eps", width=200, units="mm")
+
+#Phylum_Counts_Therm <- data.frame(matrix(NA, nrow = length(Phyla_Therm), ncol = 2))
+#Phylum_Counts_Therm[,1] <- Phyla_Therm
+#Phylum_Counts_Therm[,2] <- Counts
+#colnames(Phylum_Counts_Therm) <- c("Phylum", "Reads")
+#Phylum_Counts_Therm$Percentage_Therm <- Phylum_Counts_Therm[,2]/sum(Phylum_Counts_Therm[,2])
+#sum(Phylum_Counts_Therm[,3])
+
+#Phylum_OTUs_Therm <- data.frame(matrix(NA, nrow = length(Phyla_Therm), ncol = 2))
+#Phylum_OTUs_Therm[,1] <- Phyla_Therm
+#Phylum_OTUs_Therm[,2] <- Num_OTUs
+#colnames(Phylum_OTUs_Therm) <- c("Phylum", "Number_of_Temperature_Responsive_OTUs")
+#Phylum_OTUs_Therm$PercentageOTUs <- Phylum_OTUs_Therm[,2]/sum(Phylum_OTUs_Therm[,2])
+#sum(Phylum_OTUs_Therm$PercentageOTUs)
+
+#Phylum_Therm <- cbind(Phylum_Counts_Therm, Phylum_OTUs_Therm[,2:3])
+#Phylum_Therm[,1] <- sub("p__", "", Phylum_Therm[,1])
+#Phylum_Therm[,1] <- sub("k__", "", Phylum_Therm[,1])
+#Phylum_Therm[,1] <- sub(" ", "", Phylum_Therm[,1])
+#Phylum_Therm[5,1] <- "Unclassified_Bacteria"
+#Phylum_Therm[42,1] <- "Unclassified_Archaea"
+
+# Read in Phylum Counts of genomes from (hyper)thermophiles in IMG 
+#JGI_Therm <- read.table("JGI_Thermophile_Phylum_Counts_November9th.txt", sep="\t", stringsAsFactors = FALSE, header = FALSE)
+#JGI_Therm$V3 <- JGI_Therm$V2/sum(JGI_Therm$V2)
+
+#Make combined Dataset
+#Combined <- data.frame(matrix(NA, nrow = length(Phyla_Therm)+length(Phyla_Therm)+nrow(JGI_Therm), ncol = 3))
+#Combined[,1] <- c(Phylum_Therm$Phylum, Phylum_Therm$Phylum, JGI_Therm[,1])
+#Combined[,2] <- c(Phylum_Therm$Percentage_Therm, Phylum_Therm$PercentageOTUs, JGI_Therm[,3])
+#Combined[,3]<-c(rep("RelativeAbundanceTherm",42),rep("PercentageThermophileOTUs",42),rep("JGI",28))
+#Combined[,4]<-c(rep("A",42),rep("B",42),rep("C",28))
+
+#colnames(Combined) <- c("Phylum", "Proportion", "Category", "Text")
+#Combined$Category_f <- factor(Combined$Text, levels=c("B","A","C"))
+
+#Combined$Phylum <- sub("Thermi", "Deinococcus-Thermus", Combined$Phylum)
+
+#Names <- unique(Combined$Phylum)
+#CA_P <- NULL
+#CR_P <- NULL
+#for(i in 1:length(Names)){
+ # x <- Combined[grep(Names[i],Combined$Phylum, fixed=TRUE),]
+  #if(sum(1*(x[,2]<=0.05))==nrow(x)){
+   # CR_P <- rbind(CR_P, x)
+#  }else{
+ #   CA_P <- rbind(CA_P,x)
+ # }
+    
+  #}
+
+#row.names(CA_P) <- c(1:nrow(CA_P))
 # Add the unclassifieds to the Rare table
-CR_P <- rbind(CR_P, CA_P[36,])
-CR_P <- rbind(CR_P, CA_P[33,])
+#CR_P <- rbind(CR_P, CA_P[36,])
+#CR_P <- rbind(CR_P, CA_P[33,])
 
 # Remove unclassified archaea, unclassifieds, and duplicated unclassified_bacteria from the abundant table. 
-CA_P <- CA_P[-37,]
-CA_P <- CA_P[-36,]
-CA_P <- CA_P[-35,]
-CA_P <- CA_P[-34,]
-CA_P <- CA_P[-33,]
-CA_P <- CA_P[-32,]
+#CA_P <- CA_P[-37,]
+#CA_P <- CA_P[-36,]
+#CA_P <- CA_P[-35,]
+#CA_P <- CA_P[-34,]
+#CA_P <- CA_P[-33,]
+#CA_P <- CA_P[-32,]
 
-nrow(CA_P) + nrow(CR_P) == nrow(Combined)
+#nrow(CA_P) + nrow(CR_P) == nrow(Combined)
 
-pa <- ggplot(data=CA_P, aes(x=Phylum, y=Proportion)) + geom_bar(stat="identity", aes(x=Phylum,y=Proportion)) + facet_wrap(~Category_f, nrow=3, strip.position="right") + theme(strip.background = element_blank(),strip.text.y=element_blank(), axis.text.x = element_text(angle=60, hjust=1, vjust=1, lineheight = rel(2), size=10), axis.title.x= element_text(vjust=1),strip.text.x=element_text(size=rel(2)), axis.text.y=element_text(size=15)) + guides(fill=FALSE)
-pa
-ggsave("../Figures/Fig3A.png", width=50, units="mm")
+#pa <- ggplot(data=CA_P, aes(x=Phylum, y=Proportion)) + geom_bar(stat="identity", aes(x=Phylum,y=Proportion)) + facet_wrap(~Category_f, nrow=3, strip.position="right") + theme(strip.background = element_blank(),strip.text.y=element_blank(), axis.text.x = element_text(angle=60, hjust=1, vjust=1, lineheight = rel(2), size=10), axis.title.x= element_text(vjust=1),strip.text.x=element_text(size=rel(2)), axis.text.y=element_text(size=15)) + guides(fill=FALSE)
+#pa
+#ggsave("../Figures/Fig3A.png", width=50, units="mm")
 
-pr <- ggplot(data=CR_P, aes(x=Phylum, y=Proportion)) + geom_bar(stat="identity", aes(x=Phylum,y=Proportion)) + facet_wrap(~Category_f, nrow=3, strip.position="right") + theme(strip.background = element_blank(), strip.text.y=element_blank(), axis.text.x = element_text(angle=60, hjust=1, vjust=1, lineheight = rel(2), size=10), axis.title.x= element_text(vjust=1),strip.text.x=element_text(size=rel(2)), axis.text.y=element_text(size=15)) + guides(fill=FALSE)
-pr
-ggsave("../Figures/Fig3B.png", width=200, units="mm")
+#pr <- ggplot(data=CR_P, aes(x=Phylum, y=Proportion)) + geom_bar(stat="identity", aes(x=Phylum,y=Proportion)) + facet_wrap(~Category_f, nrow=3, strip.position="right") + theme(strip.background = element_blank(), strip.text.y=element_blank(), axis.text.x = element_text(angle=60, hjust=1, vjust=1, lineheight = rel(2), size=10), axis.title.x= element_text(vjust=1),strip.text.x=element_text(size=rel(2)), axis.text.y=element_text(size=15)) + guides(fill=FALSE)
+#pr
+#ggsave("../Figures/Fig3B.png", width=200, units="mm")
 
 
 ### Trying to Even out Bars
@@ -396,8 +487,6 @@ Modules_w_Modules <- Modules[MO_Per_M>0,]
 Dictionary <- vector(mode="list", length=nrow(Modules))
 names(Dictionary) <- row.names(Modules)
 
-Dictionary[[1]]
-grep(row.names(KO.rpob)[10], Modules$Definition)
 ### For Some Module definitions, they have other modules in them, this is formating those definitions so that there are only K0 and no M0's in the Definition. As a side note these are all "Signature" module types
 #Acetogen
 Modules["M00618",3] <- paste(c(Modules["M00377",3],Modules["M00579",3]), collapse=" ")
@@ -417,11 +506,31 @@ Modules["M00611",3] <- paste(c(Modules["M00161",3],Modules["M00163",3],Modules["
 Modules["M00616",3] <- paste(c(Modules["M00185",3],Modules["M00176",3]), collapse=" ")
 
 #Produces a list, each item in this list is a dataframe with the KO's in our dataset 
-for (y in 1:nrow(KO.rpob)){
-  KO_M <- grep(row.names(KO.rpob)[y], Modules$Definition)
+#Relativized to rpoB
+#for (y in 1:nrow(KO.rpob)){
+#  KO_M <- grep(row.names(KO.rpob)[y], Modules$Definition)
+#  if (length(KO_M)>0){
+#    for (x in 1:length(KO_M)){
+#      Dictionary[[KO_M[x]]] <- rbind(Dictionary[[KO_M[x]]], KO.rpob[y,])
+#    }
+#  }
+#}
+# Relativized to rpsM
+for (y in 1:nrow(KO.rpsM)){
+  KO_M <- grep(row.names(KO.rpsM)[y], Modules$Definition)
   if (length(KO_M)>0){
     for (x in 1:length(KO_M)){
-      Dictionary[[KO_M[x]]] <- rbind(Dictionary[[KO_M[x]]], KO.rpob[y,])
+      Dictionary[[KO_M[x]]] <- rbind(Dictionary[[KO_M[x]]], KO.rpsM[y,])
+    }
+  }
+}
+
+# Relativized to total KO Count
+for (y in 1:nrow(KO.rel)){
+  KO_M <- grep(row.names(KO.rel)[y], Modules$Definition)
+  if (length(KO_M)>0){
+    for (x in 1:length(KO_M)){
+      Dictionary[[KO_M[x]]] <- rbind(Dictionary[[KO_M[x]]], KO.rel[y,])
     }
   }
 }
@@ -835,7 +944,7 @@ SignificantModules_Summary <- SignificantModules_Summary[,c(8,7,1,2,3,4,5,6)]
 colnames(SignificantModules_Summary) <- c("Module Description","Completeness","T Statistic", "T Degrees Freedom", "T-test p value", "Pearson's Rho", "Pearson Degrees Freedom", "Pearson p value")
 SignificantModules_Summary[,-1] <- round(SignificantModules_Summary[,-1], 3)
 row.names(SignificantModules_Summary) <- row.names(Combined_Sig_Modules)
-write.table(x = SignificantModules_Summary, file="Supplemental/SupplementalTable2.txt", sep="\t", quote=FALSE)
+write.table(x = SignificantModules_Summary, file="Supplemental/SupplementalTable2_rel.txt", sep="\t", quote=FALSE)
 
 ### Indicator Module Analysis
 library(indicspecies)
@@ -966,3 +1075,19 @@ v=vennCounts(data.rare.pa.nz)
 v2=round(v[,"Counts"]/sum(v[,"Counts"]),2)
 v[,"Counts"]<-v2
 vennDiagram(v)
+
+
+#List of Unclassified OTUs
+
+sum(1*grepl("Unclassified", rdp))
+grep("Bacteria", rdp)
+
+
+FULL_Taxonomy <- NULL
+for (i in 1:nrow(comm.rdp)){
+  FULL_Taxonomy <- rbind(FULL_Taxonomy,unlist(strsplit(as.character(comm.rdp[i,19]), ";")))
+}
+row.names(comm.rdp)[grep("Bacteria", FULL_Taxonomy[,2])]
+write.table(row.names(comm.rdp)[grep("Bacteria", FULL_Taxonomy[,2])],"Unclassified_Bacteria_OTUs.txt", sep="\t", quote=FALSE, col.names=FALSE, row.names=FALSE)
+?write.table
+write.table(row.names(comm.rdp)[grep("Archaea", FULL_Taxonomy[,2])], "Unclassified_Archaea_OTUs.txt", sep="\t", quote=FALSE, col.names=FALSE, row.names=FALSE)
