@@ -26,11 +26,33 @@ alpha <- read.table("MASTER_OTU_hdf5_filteredfailedalignments_rdp_rmCM_collapse_
 
 alpha <- alpha[order(row.names(alpha)),]
 alpha_MG <- alpha[c(1,3,4,5,6,7,10,12,14,15,16,17),]
+
+setEPS()
+postscript("../Figures/MGStatsVs16Sstats.eps", width = 5, height=5, pointsize=8,paper="special")
 par(mfrow=c(2,2))
-plot(alpha_MG$PD_whole_tree, sum_stats$PercentMapped)
-plot(alpha_MG$observed_otus, sum_stats$PercentMapped)
-plot(alpha_MG$PD_whole_tree, sum_stats$Assembled.Length)
-plot(alpha_MG$observed_otus, sum_stats$Assembled.Length)
+fig = plot(alpha_MG$PD_whole_tree, sum_stats$PercentMapped, ylab="Percent Reads Mapped", xlab="PD") 
+plot(alpha_MG$observed_otus, sum_stats$PercentMapped, ylab="Percent Reads Mapped", xlab="OTUs")
+plot(alpha_MG$PD_whole_tree, sum_stats$Assembled.Length, ylab="Assembled Length", xlab="PD")
+plot(alpha_MG$observed_otus, sum_stats$Assembled.Length, ylab="Assembled Length", xlab="OTUs")
+dev.off()
+cor.test(alpha_MG$PD_whole_tree, sum_stats$PercentMapped)
+cor.test(alpha_MG$observed_otus, sum_stats$PercentMapped)
+cor.test(alpha_MG$PD_whole_tree, sum_stats$Assembled.Length)
+cor.test(alpha_MG$observed_otus, sum_stats$Assembled.Length)
+
+cor.test(sum_stats$Quality.Reads, sum_stats$Assembled.Length)
+plot(sum_stats$Quality.Reads, sum_stats$Assembled.Length)
+cor.test(alpha_MG$observed_otus, sum_stats$Quality.Reads)
+library(outliers)
+
+grubbs.test(sum_stats$Quality.Reads, type=10)
+grubbs.test(sum_stats$Quality.Reads, type=11)
+grubbs.test(sum_stats$Quality.Reads, type=20)
+
+grubbs.test(sum_stats$Assembled.Length, type=10)
+grubbs.test(sum_stats$Assembled.Length, type=11)
+grubbs.test(sum_stats$Assembled.Length, type=20)
+
 
 # 16S OTU Table
 comm <- read.table("MASTER_OTU_hdf5_filteredfailedalignments_rdp_rmCM_collapse_even321000.txt", sep="\t", row.names=1, header=TRUE, stringsAsFactors = FALSE)
@@ -116,6 +138,19 @@ for(i in 1:nrow(Odds_Ratio)){
   SCG_Correlations <- rbind(SCG_Correlations, unlist(result[1:4]))
 }
 row.names(SCG_Correlations) <- row.names(Odds_Ratio)
+library(readr)
+COG_Key <- read_delim("~/GitHub_Repos/ShadeLab/CentraliaThermophiles/Workflow/Supplemental/He_et_al_COG_to_KEGG.txt","\t", escape_double = FALSE, trim_ws = TRUE)
+COG_Key <- as.data.frame(COG_Key)
+row.names(COG_Key) <- COG_Key[,3]
+COG_Key <- COG_Key[-34,]
+COG_Key <- COG_Key[-33,]
+COG_Key <- COG_Key[-29,]
+COG_Key <- COG_Key[order(row.names(COG_Key)),]
+SCG_Correlations <- as.data.frame(SCG_Correlations)
+SCG_Correlations <- SCG_Correlations[order(row.names(SCG_Correlations)),]
+New_Table <- cbind(COG_Key, SCG_Correlations)
+
+New_Table <- cbind(COG_Key, SCG_Correlations)
 par(mfrow=c(5,5))
 for(i in 1:nrow(Odds_Ratio)){
   plot(map_MG$SoilTemperature_to10cm, as.numeric(Odds_Ratio[i,]), xlab="Temp", ylab="Odds Ratio", main=row.names(Odds_Ratio[i,]))
