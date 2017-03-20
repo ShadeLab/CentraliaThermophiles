@@ -11,9 +11,26 @@ map <- read.table("Centralia_Collapsed_Map_forR.txt",sep="\t", row.names=1, head
 
 map_MG <- map[c(1,3,4,5,6,7,10,12,14,15,16,17),]
 
+sum_stats <- read.table("../Centralia_Metagenome_Summary_Stats.txt", sep="\t", header=TRUE, row.names=1)
+sum_stats <- sum_stats[,-10]
+sum_stats$PercentMapped <- sum_stats$Aligned.Reads/sum_stats$Quality.Reads
+
+
+
 CO2_2015 <- c(525,455,500,512,484,779,581,503,6094,17112,15760,13969,7390,723,1624,597,480,477)
 CO2_MG_2015 <- CO2_2015[c(1,3,4,5,6,7,10,12,14,15,16,17)]
 t.test(CO2_MG_2015[map_MG$Classification=="FireAffected"], CO2_MG_2015[map_MG$Classification!="FireAffected"])
+
+# Alpha Diversity
+alpha <- read.table("MASTER_OTU_hdf5_filteredfailedalignments_rdp_rmCM_collapse_even321000_alphadiv.txt", sep="\t", stringsAsFactors = FALSE, header=TRUE, row.names = 1)
+
+alpha <- alpha[order(row.names(alpha)),]
+alpha_MG <- alpha[c(1,3,4,5,6,7,10,12,14,15,16,17),]
+par(mfrow=c(2,2))
+plot(alpha_MG$PD_whole_tree, sum_stats$PercentMapped)
+plot(alpha_MG$observed_otus, sum_stats$PercentMapped)
+plot(alpha_MG$PD_whole_tree, sum_stats$Assembled.Length)
+plot(alpha_MG$observed_otus, sum_stats$Assembled.Length)
 
 # 16S OTU Table
 comm <- read.table("MASTER_OTU_hdf5_filteredfailedalignments_rdp_rmCM_collapse_even321000.txt", sep="\t", row.names=1, header=TRUE, stringsAsFactors = FALSE)
@@ -36,27 +53,75 @@ rdp <- rdp[rowSums(comm.sigs)>1]
 KO <- read.table("KO_minus2col_09-27-2016.tab.txt", sep="\t", row.names = 1, header = TRUE, stringsAsFactors = FALSE)
 colnames(KO) <- map_MG$Sample
 
-rpoB <- KO["KO:K03043",] + KO["KO:K13798",] ### add the bacterial and archaeal copies together.
+# So whenever in R, make sure its not accidentally trying to add strings...
+#rpoB <- KO["KO:K03043",] + KO["KO:K13798",] ### add the bacterial and archaeal copies together.
+rpoB <- as.numeric(KO["KO:K03043",]) + as.numeric(KO["KO:K13798",])
+# informative Plots
+ plot(as.numeric(rpoB), as.numeric(map_MG$SoilTemperature_to10cm))
+ plot(as.numeric( KO["KO:K03043",]), as.numeric(map_MG$SoilTemperature_to10cm))
+ plot(as.numeric(KO["KO:K13798",]), as.numeric(map_MG$SoilTemperature_to10cm))
+ plot(as.numeric(KO["KO:K03043",]), as.numeric(KO["KO:K13798",]))
+#
 # Remove KOs with zeroes across the entire dataset
 KO <- KO[rowSums(KO)>0,]
-
+KO <- t(rrarefy(t(KO),10064577))
 #Relativze to rpoB
 KO.rpob <- NULL
 for (i in 1:nrow(KO)){
   KO.rpob <- rbind(KO.rpob, KO[i,]/rpoB)
 }
 
-row.names(KO.rpob) <- sub("KO:", "", row.names(KO.rpob))
+row.names(KO.rpob) <- sub("KO:", "", row.names(KO))
 
 # Relativize to rpsM
 KO.rpsM <- NULL
 for(i in 1:nrow(KO)){
   KO.rpsM<- rbind(KO.rpsM, KO[i,]/KO["KO:K02952",])
 }
-row.names(KO.rpsM) <- sub("KO:","", row.names(KO.rpsM))
+row.names(KO.rpsM) <- row.names(KO.rpob)
 #Relativized to KO count
 KO.rel <- decostand(x=KO, method="total", MARGIN=2)
 row.names(KO.rel) <- sub("KO:","",row.names(KO.rel))
+#Single Copy KO's
+sc_KO <- read.table("Single_Copy_KO.txt", sep="\t", header = FALSE, stringsAsFactors = FALSE)
+
+Average_MG <- NULL
+for( i in 1:nrow(KO)){
+  Average_MG <- c(Average_MG, mean(KO[i,]))
+}
+row.names(KO) <- sub("KO:", "", row.names(KO))
+Average_MG <- as.data.frame(Average_MG)
+row.names(Average_MG) <- row.names(KO)
+KO[sc_KO[,1],]
+KO["K01889",]
+data.class(sc_KO)
+sc <- sc_KO[,1]
+data.class(sc)
+sc[1]
+sc<- sc[-6]
+sum(1*(row.names(KO)==sc[2]))
+KO <- as.data.frame(KO)
+Odds_Ratio <- NULL
+for (i in 1:length(sc_KO[,1])){
+  Odds_Ratio <- rbind(Odds_Ratio, KO[sc[i],]/Average_MG[sc[i],1])
+}
+
+#Remove non present single copy genes
+Odds_Ratio<- Odds_Ratio[-34,]
+Odds_Ratio <- Odds_Ratio[-33,]
+Odds_Ratio <- Odds_Ratio[-29,]
+SCG_Correlations <- NULL
+for(i in 1:nrow(Odds_Ratio)){
+  result <- cor.test(map_MG$SoilTemperature_to10cm, as.numeric(Odds_Ratio[i,]))
+  SCG_Correlations <- rbind(SCG_Correlations, unlist(result[1:4]))
+}
+row.names(SCG_Correlations) <- row.names(Odds_Ratio)
+par(mfrow=c(5,5))
+for(i in 1:nrow(Odds_Ratio)){
+  plot(map_MG$SoilTemperature_to10cm, as.numeric(Odds_Ratio[i,]), xlab="Temp", ylab="Odds Ratio", main=row.names(Odds_Ratio[i,]))
+}
+plot(map_MG$SoilTemperature_to10cm, Odds_Ratio[2,])
+
 ### Venn Analysis 16S 
 #source("http://www.bioconductor.org/biocLite.R")
 #biocLite("limma")
@@ -484,6 +549,7 @@ for (i in 1:nrow(Modules)){
 
 Modules_w_Modules <- Modules[MO_Per_M>0,]
 
+Dictionary=NULL
 Dictionary <- vector(mode="list", length=nrow(Modules))
 names(Dictionary) <- row.names(Modules)
 
@@ -507,14 +573,14 @@ Modules["M00616",3] <- paste(c(Modules["M00185",3],Modules["M00176",3]), collaps
 
 #Produces a list, each item in this list is a dataframe with the KO's in our dataset 
 #Relativized to rpoB
-#for (y in 1:nrow(KO.rpob)){
-#  KO_M <- grep(row.names(KO.rpob)[y], Modules$Definition)
-#  if (length(KO_M)>0){
-#    for (x in 1:length(KO_M)){
-#      Dictionary[[KO_M[x]]] <- rbind(Dictionary[[KO_M[x]]], KO.rpob[y,])
-#    }
-#  }
-#}
+for (y in 1:nrow(KO.rpob)){
+  KO_M <- grep(row.names(KO.rpob)[y], Modules$Definition)
+  if (length(KO_M)>0){
+    for (x in 1:length(KO_M)){
+      Dictionary[[KO_M[x]]] <- rbind(Dictionary[[KO_M[x]]], KO.rpob[y,])
+    }
+  }
+}
 # Relativized to rpsM
 for (y in 1:nrow(KO.rpsM)){
   KO_M <- grep(row.names(KO.rpsM)[y], Modules$Definition)
@@ -580,11 +646,11 @@ KO_Per_M_Data/KO_Per_M
 
 
 ### Getting Rid of Modules that are not present at all in our data. 
-Dictionary_Subset <- Dictionary[lapply(Dictionary, data.class) == "data.frame"]
+Dictionary_Subset <- Dictionary[lapply(Dictionary, data.class) == "matrix"]
 #Dictionary_AZ_Subset <- Dictionary_AddedZeroes[lapply(Dictionary_AddedZeroes, data.class) == "data.frame"]
-Modules_Subset <- Modules[lapply(Dictionary,data.class) == "data.frame",]
-KO_Per_M_Subset <- KO_Per_M[lapply(Dictionary, data.class) == "data.frame"]
-KO_Per_M_Data_Subset <- KO_Per_M_Data[lapply(Dictionary, data.class) == "data.frame"]
+Modules_Subset <- Modules[lapply(Dictionary,data.class) == "matrix",]
+KO_Per_M_Subset <- KO_Per_M[lapply(Dictionary, data.class) == "matrix"]
+KO_Per_M_Data_Subset <- KO_Per_M_Data[lapply(Dictionary, data.class) == "matrix"]
 
 #Fraction of KOs from each module present in our dataset
 Module_Completeness <- KO_Per_M_Data_Subset/KO_Per_M_Subset
@@ -844,7 +910,7 @@ Combined_Sig_Module_Names <- unique(c(row.names(Sig_Ttest_Modules), row.names(Si
 
 Combined_Sig_Modules <- mid_mod[Combined_Sig_Module_Names,]
 
-
+library(Hmisc)
 TempCor_Sig_vector <-1*(Combined_Sig_Module_Names%nin%row.names(Sig_TempCor_Modules)=="FALSE")
 Ttest_Sig_vector <- 2*(Combined_Sig_Module_Names%nin%row.names(Sig_Ttest_Modules)=="FALSE")
 
@@ -864,74 +930,16 @@ Combined_Sig_Modules.zs <- decostand(Combined_Sig_Modules, method="standardize",
 par(mfrow=c(1,1))
 setEPS()
 
-png("../Figures/Heatmap_Combined.png", width = 2000, height=4000, pointsize=8)
+png("../Figures/Heatmap_Combined_rarefied_rpoB.png", width = 2000, height=4000, pointsize=8)
 fig10 <- heatmap.2(Combined_Sig_Modules.zs, col=hc(100), key=FALSE, symkey=FALSE, trace="none", density.info="none", colsep=c(1:12),rowsep=c(1:nrow(Combined_Sig_Modules.zs)), sepcolor="black", sepwidth=c(0.01,0.00001), dendrogram="row",cexRow = 2, labRow=FALSE, margins=c(5,13), srtCol=90, colRow = Classification_Test, RowSideColors=Classification_Test, lhei = c(1,100))
 dev.off()
 ### For the Legend
-png("../Figures/Heatmap_Legend.png", width = 2000, height=4000, pointsize=8)
+png("../Figures/Heatmap_Legend_rarefied_rpoB.png", width = 2000, height=4000, pointsize=8)
 fig10 <- heatmap.2(Combined_Sig_Modules.zs, col=hc(100), key=TRUE, symkey=FALSE, trace="none", density.info="none", colsep=c(1:12),rowsep=c(1:nrow(Combined_Sig_Modules.zs)), sepcolor="black", sepwidth=c(0.01,0.00001), dendrogram="row",cexRow = 2, labRow=FALSE, margins=c(5,13), srtCol=90, colRow = Classification_Test, RowSideColors=Classification_Test, lhei = c(1,10))
 dev.off()
 
 # Investigating the Clusters
-Temp_Sensitive <- c("M00591","M00644", "M00339","M00480","M00474","M00298","M00251","M00090","M00235","M00204","M00722","M00216","M00230","M00607","M00662","M00446","M00040","M00208","M00042","M00641","M00672","M00627","M00509","M00639","M00136","M00025","M00328","M00593","M00631")
-Modules[Temp_Sensitive,]
-write.table(Modules[Temp_Sensitive,1:2], file="TempSensitiveModules.txt", quote=FALSE)
 
-C1 <- c("M00597", "M00435","M00011","M00320","M00638","M00249","M00153","M00163","M00609","M00161","M00145","M00346","M00061","M00580","M00345","M00172","M00171","M00027")
-Modules[C1,]
-write.table(Modules[C1,1:2], file="Cluster1_Modules.txt", quote=FALSE)
-
-C2 <- c("M00479","M00116","M00196","M00343","M00342","M00309","M00482","M00113","M00256","M00243","M00283","M00550","M00151","M00540","M00416","M00548","M00604","M00623","M00203","M00219","M00001","M00167","M00033","M00081","M00162","M00545","M00569","M00436","M00510","M00010","M00176","M00165","M00612")
-Modules[C2,]
-write.table(Modules[C2,1:2], file="Cluster2_Modules.txt", quote=FALSE)
-
-C3 <- c("M00668","M00080","M00543","M00091","M00331","M00613","M00099","M00186","M00250","M00190","M00602","M00544","M00135")
-Modules[C3,]
-write.table(Modules[C3,1:2], file="Cluster3_Modules.txt", quote=FALSE)
-
-C4 <- c("M00400","M00403","M00423","M00413","M00179","M00184","M00391","M00390","M00288","M00177","M00425","M00181","M00180","M00182","M00529","M00120","M00095","M00344","M00530","M00367","M00365","M00166","M00374", "M00032","M00401","M00072","M00264","M00261","M00633","M00596","M00763","M00031","M00159","M00582","M00338")
-Modules[C4,]
-write.table(Modules[C4,1:2], file="Cluster4_Modules.txt", quote=FALSE)
-
-C5 <- c("M00013", "M00717","M00442","M00290","M00473")
-Modules[C5,]
-write.table(Modules[C5,1:2], file="Cluster5_Modules.txt", quote=FALSE)
-
-C6<- c("M00168","M00740", "M00368","M00018","M00012","M00052","M00178","M00023","M00019","M00570","M00140","M00222","M00360","M00359","M00378","M00237","M00053","M00016","M00114","M00254","M00141","M00364","M00003","M00005","M00045","M00239","M00207","M00170","M00489","M00490","M00611", "M00392","M00267","M00275","M00507","M00552","M00614","M00051","M00366","M00007","M00121","M00002", "M00149", "M00021", "M00029")
-Modules[C6,]
-write.table(Modules[C6,1:2], file="Cluster6_Modules.txt", quote=FALSE)
-
-C7 <- c("M00133","M00620","M00616","M00484","M00087","M00088","M00375")
-Modules[C7,]
-write.table(Modules[C7,1:2], file="Cluster7_Modules.txt", quote=FALSE)
-
-C8 <- c("M00189","M00471","M00155","M00376","M00483","M00434","M00236","M00193","M00028","M00036","M00549","M00506","M00260","M00454","M00505","M00246","M00245","M00093","M00060","M00572")
-Modules[C8,]
-write.table(Modules[C8,1:2], file="Cluster8_Modules.txt", quote=FALSE)
-
-C9 <- c("M00008","M00066","M00333","M00308","M00452","M00554","M00632","M00173","M00535","M00432","M00082","M00006","M00361", "M00004", "M00335")
-Modules[C9,]
-write.table(Modules[C9,1:2], file="Cluster9_Modules.txt", quote=FALSE)
-
-C10 <- c("M00125","M00022","M00049","M00048","M00026","M00157","M00336","M00188","M00096","M00127","M00131","M00209","M00526","M00525","M00527","M00531","M00117","M00064","M00009","M00259","M00144","M00729", "M00115", "M00183")
-Modules[C10,]
-write.table(Modules[C10,1:2], file="Cluster10_Modules.txt", quote=FALSE)
-
-C11 <- c("M00129","M00394","M00122","M00119","M00362","M00670","M00669")
-Modules[C11,]
-write.table(Modules[C11,1:2], file="Cluster11_Modules.txt", quote=FALSE)
-
-C12 <- c("M00567","M00465","M00647","M00725","M00242","M00358","M00458","M00481")
-Modules[C12,]
-write.table(Modules[C12,1:2], file="Cluster12_Modules.txt", quote=FALSE)
-
-C13<- c("M00357","M00077","M00450","M00646","M00035","M00460")
-Modules[C13,]
-write.table(Modules[C13,1:2], file="Cluster13_Modules.txt", quote=FALSE)
-
-C14 <- c("M00124","M00050","M00565","M00210","M00240","M00519","M00741","M00123","M00577","M00573")
-Modules[C14,]
-write.table(Modules[C14,1:2], file="Cluster14_Modules.txt", quote=FALSE)
 
 ### Create Supplemental Table of Summaries
 SignificantModules_Summary <- NULL
@@ -944,7 +952,7 @@ SignificantModules_Summary <- SignificantModules_Summary[,c(8,7,1,2,3,4,5,6)]
 colnames(SignificantModules_Summary) <- c("Module Description","Completeness","T Statistic", "T Degrees Freedom", "T-test p value", "Pearson's Rho", "Pearson Degrees Freedom", "Pearson p value")
 SignificantModules_Summary[,-1] <- round(SignificantModules_Summary[,-1], 3)
 row.names(SignificantModules_Summary) <- row.names(Combined_Sig_Modules)
-write.table(x = SignificantModules_Summary, file="Supplemental/SupplementalTable2_rel.txt", sep="\t", quote=FALSE)
+write.table(x = SignificantModules_Summary, file="Supplemental/SupplementalTable2_rarefied_rpoB.txt", sep="\t", quote=FALSE)
 
 ### Indicator Module Analysis
 library(indicspecies)
@@ -962,6 +970,7 @@ wetpt = multipatt(tmidmod, IndicClusters, )
 ### Finding Maximum Site for each Module
 hist(apply(Combined_Sig_Modules.zs, 1, which.max))
 hist(apply(mid_mod,1,which.max))
+
 ### PCoA's for Module, Ortholog, and UF distacnes
 library(calibrate)
 class <- rep("black", nrow(map_MG))
