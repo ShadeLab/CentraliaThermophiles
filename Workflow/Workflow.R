@@ -138,6 +138,7 @@ for(i in 1:nrow(Odds_Ratio)){
   SCG_Correlations <- rbind(SCG_Correlations, unlist(result[1:4]))
 }
 row.names(SCG_Correlations) <- row.names(Odds_Ratio)
+par(mfrow=c(1,1))
 library(readr)
 COG_Key <- read_delim("~/GitHub_Repos/ShadeLab/CentraliaThermophiles/Workflow/Supplemental/He_et_al_COG_to_KEGG.txt","\t", escape_double = FALSE, trim_ws = TRUE)
 COG_Key <- as.data.frame(COG_Key)
@@ -155,6 +156,7 @@ par(mfrow=c(5,5))
 for(i in 1:nrow(Odds_Ratio)){
   plot(map_MG$SoilTemperature_to10cm, as.numeric(Odds_Ratio[i,]), xlab="Temp", ylab="Odds Ratio", main=row.names(Odds_Ratio[i,]))
 }
+par(mfrow=c(1,1))
 plot(map_MG$SoilTemperature_to10cm, Odds_Ratio[2,])
 
 ### Venn Analysis 16S 
@@ -786,10 +788,10 @@ a
 b=betadisper(Mod.d, group=Class)
 TukeyHSD(b, which = "group", ordered = FALSE,conf.level = 0.95)
 
-# Distance Matrix based on KO
-KO.d <- vegdist(t(KO.rpob),method="bray")
+# Distance Matrix based on KO rel
+KO.d <- vegdist(t(KO.rel),method="bray")
 
-# Settin gup Classifications
+# Setting up Classifications
 Class <- rep("Red", 12)
 Class[map_MG$Classification!="FireAffected"] <- "Green"
 
@@ -840,6 +842,17 @@ space.d.mg <- space.d[c(1,3,4,5,6,7,10,12,14,15,16,17),c(1,3,4,5,6,7,10,12,14,15
 plot(as.numeric(space.d.mg), as.matrix(KO.d))
 plot(as.numeric(space.d.mg), as.matrix(uf_mg.d))
 
+M_v_Space.mantel <- mantel(Mod.d, space.d.mg)
+K_v_Space.mantel <- mantel(KO.d, space.d.mg)
+U_v_Space.mantel <- mantel(uf_mg.d, space.d.mg)
+
+Distance1 <-c("Module", "Module", "Module", "KO", "KO", "UniFrac")
+Distance2<- c("KO", "UniFrac", "Space","UniFrac", "Space", "Space")
+Mantel_Names<- c("Distance1", "Distance2","Mantel_R", "p-value")
+Mantel_R <- c(M_v_K.mantel[3], M_v_U.mantel[3], M_v_Space.mantel[3], K_v_U.mantel[3], K_v_Space.mantel[3], U_v_Space.mantel[3])
+Mantel_Pvalues <- c(M_v_K.mantel[4], M_v_U.mantel[4], M_v_Space.mantel[4], K_v_U.mantel[4], K_v_Space.mantel[4], U_v_Space.mantel[4])
+Mantel_Summary <- cbind(Distance1, Distance2, Mantel_R, Mantel_Pvalues)
+write.table(as.matrix(Mantel_Summary),"Supplemental/Supplemental_Mantel.txt", sep="\t", row.names=FALSE, quote=FALSE)
 # Protest and Mantel test reveal all three datasets resemble each other
 
 
@@ -943,7 +956,7 @@ Sig_TempCor_Modules <- Modules_Subset[Med_Mod_TempCor[,3]<0.05,]
 
 Combined_Sig_Module_Names <- unique(c(row.names(Sig_Ttest_Modules), row.names(Sig_TempCor_Modules)))
 
-Combined_Sig_Modules <- mid_mod[Combined_Sig_Module_Names,]
+Combined_Sig_Modules <- as.data.frame(mid_mod)[Combined_Sig_Module_Names,]
 
 library(Hmisc)
 TempCor_Sig_vector <-1*(Combined_Sig_Module_Names%nin%row.names(Sig_TempCor_Modules)=="FALSE")
@@ -961,16 +974,17 @@ library(gplots)
 library(vegan)
 hc=colorRampPalette(c("#91bfdb","white","#fc8d59"), interpolate="linear")
 
-Combined_Sig_Modules.zs <- decostand(Combined_Sig_Modules, method="standardize", MARGIN=1)
+
+Combined_Sig_Modules.zs <- decostand(as.matrix(Combined_Sig_Modules[-46,]), method="standardize", MARGIN=1)
 par(mfrow=c(1,1))
 setEPS()
 
 png("../Figures/Heatmap_Combined_rarefied_rpoB.png", width = 2000, height=4000, pointsize=8)
-fig10 <- heatmap.2(Combined_Sig_Modules.zs, col=hc(100), key=FALSE, symkey=FALSE, trace="none", density.info="none", colsep=c(1:12),rowsep=c(1:nrow(Combined_Sig_Modules.zs)), sepcolor="black", sepwidth=c(0.01,0.00001), dendrogram="row",cexRow = 2, labRow=FALSE, margins=c(5,13), srtCol=90, colRow = Classification_Test, RowSideColors=Classification_Test, lhei = c(1,100))
+fig10 <- heatmap.2(Combined_Sig_Modules.zs, col=hc(100), key=FALSE, symkey=FALSE, trace="none", density.info="none", colsep=c(1:12),rowsep=c(1:nrow(Combined_Sig_Modules.zs)), sepcolor="black", sepwidth=c(0.01,0.00001), dendrogram="row",cexRow = 2, labRow=FALSE, margins=c(5,13), srtCol=90, colRow = Classification_Test[-46], RowSideColors=Classification_Test[-46], lhei = c(1,100))
 dev.off()
 ### For the Legend
 png("../Figures/Heatmap_Legend_rarefied_rpoB.png", width = 2000, height=4000, pointsize=8)
-fig10 <- heatmap.2(Combined_Sig_Modules.zs, col=hc(100), key=TRUE, symkey=FALSE, trace="none", density.info="none", colsep=c(1:12),rowsep=c(1:nrow(Combined_Sig_Modules.zs)), sepcolor="black", sepwidth=c(0.01,0.00001), dendrogram="row",cexRow = 2, labRow=FALSE, margins=c(5,13), srtCol=90, colRow = Classification_Test, RowSideColors=Classification_Test, lhei = c(1,10))
+fig10 <- heatmap.2(Combined_Sig_Modules.zs, col=hc(100), key=TRUE, symkey=FALSE, trace="none", density.info="none", colsep=c(1:12),rowsep=c(1:nrow(Combined_Sig_Modules.zs)), sepcolor="black", sepwidth=c(0.01,0.00001), dendrogram="row",cexRow = 2, labRow=FALSE, margins=c(5,13), srtCol=90, colRow = Classification_Test[-46], RowSideColors=Classification_Test[-46], lhei = c(1,10))
 dev.off()
 
 # Investigating the Clusters
@@ -987,7 +1001,7 @@ SignificantModules_Summary <- SignificantModules_Summary[,c(8,7,1,2,3,4,5,6)]
 colnames(SignificantModules_Summary) <- c("Module Description","Completeness","T Statistic", "T Degrees Freedom", "T-test p value", "Pearson's Rho", "Pearson Degrees Freedom", "Pearson p value")
 SignificantModules_Summary[,-1] <- round(SignificantModules_Summary[,-1], 3)
 row.names(SignificantModules_Summary) <- row.names(Combined_Sig_Modules)
-write.table(x = SignificantModules_Summary, file="Supplemental/SupplementalTable2_rarefied_rpoB.txt", sep="\t", quote=FALSE)
+write.table(x = SignificantModules_Summary, file="Supplemental/SupplementalTable2_rarefied_TotalRel.txt", sep="\t", quote=FALSE)
 
 ### Indicator Module Analysis
 library(indicspecies)
