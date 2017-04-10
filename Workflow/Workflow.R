@@ -137,6 +137,10 @@ for(i in 1:nrow(Odds_Ratio)){
   result <- cor.test(map_MG$SoilTemperature_to10cm, as.numeric(Odds_Ratio[i,]))
   SCG_Correlations <- rbind(SCG_Correlations, unlist(result[1:4]))
 }
+SCG_Correlations <- as.data.frame(SCG_Correlations)
+nrow(SCG_Correlations[SCG_Correlations$p.value<0.05,])
+SCG_SigCorrelations <- SCG_Correlations[SCG_Correlations$p.value<0.05,]
+
 row.names(SCG_Correlations) <- row.names(Odds_Ratio)
 par(mfrow=c(1,1))
 library(readr)
@@ -152,13 +156,23 @@ SCG_Correlations <- SCG_Correlations[order(row.names(SCG_Correlations)),]
 New_Table <- cbind(COG_Key, SCG_Correlations)
 
 New_Table <- cbind(COG_Key, SCG_Correlations)
-par(mfrow=c(5,5))
-for(i in 1:nrow(Odds_Ratio)){
-  plot(map_MG$SoilTemperature_to10cm, as.numeric(Odds_Ratio[i,]), xlab="Temp", ylab="Odds Ratio", main=row.names(Odds_Ratio[i,]))
-}
-par(mfrow=c(1,1))
-plot(map_MG$SoilTemperature_to10cm, Odds_Ratio[2,])
 
+### ggplots Odds_Ratio
+library(reshape2)
+Odds_Ratio
+Odds_Ratio<-Odds_Ratio[Odds_Ratio$C03>0.5,]
+
+melt(Odds_Ratio, id.vars=colnames(Odds_Ratio), )
+
+MO <- cbind(Odds_Ratio, row.names(Odds_Ratio))
+MO <- melt(MO, id.vars="row.names(Odds_Ratio)",variable.name="Sample", value.name="Measurement")
+colnames(MO) <- c("KO", "Sample", "Measurement")
+library(dplyr)
+?inner_join
+Joined_Data <- inner_join(MO, map_MG, by="Sample")
+library(ggplot2)
+odr <- ggplot(Joined_Data, aes(x=SoilTemperature_to10cm, y=Measurement, color=KO)) + geom_point() + geom_smooth(method="lm", alpha=0)
+ggsave("Supplemental/SCG_OddsRation.png", odr)
 ### Venn Analysis 16S 
 #source("http://www.bioconductor.org/biocLite.R")
 #biocLite("limma")
@@ -955,6 +969,7 @@ Sig_Ttest_Modules <- Modules_Subset[Med_Mod_Ttest[,3]<0.05,]
 Sig_TempCor_Modules <- Modules_Subset[Med_Mod_TempCor[,3]<0.05,]
 
 Combined_Sig_Module_Names <- unique(c(row.names(Sig_Ttest_Modules), row.names(Sig_TempCor_Modules)))
+Combined_Sig_Module_Names <- Combined_Sig_Module_Names[-46]
 
 Combined_Sig_Modules <- as.data.frame(mid_mod)[Combined_Sig_Module_Names,]
 
@@ -975,16 +990,16 @@ library(vegan)
 hc=colorRampPalette(c("#91bfdb","white","#fc8d59"), interpolate="linear")
 
 
-Combined_Sig_Modules.zs <- decostand(as.matrix(Combined_Sig_Modules[-46,]), method="standardize", MARGIN=1)
+Combined_Sig_Modules.zs <- decostand(as.matrix(Combined_Sig_Modules), method="standardize", MARGIN=1)
 par(mfrow=c(1,1))
 setEPS()
 
 png("../Figures/Heatmap_Combined_rarefied_rpoB.png", width = 2000, height=4000, pointsize=8)
-fig10 <- heatmap.2(Combined_Sig_Modules.zs, col=hc(100), key=FALSE, symkey=FALSE, trace="none", density.info="none", colsep=c(1:12),rowsep=c(1:nrow(Combined_Sig_Modules.zs)), sepcolor="black", sepwidth=c(0.01,0.00001), dendrogram="row",cexRow = 2, labRow=FALSE, margins=c(5,13), srtCol=90, colRow = Classification_Test[-46], RowSideColors=Classification_Test[-46], lhei = c(1,100))
+fig10 <- heatmap.2(Combined_Sig_Modules.zs, col=hc(100), key=FALSE, symkey=FALSE, trace="none", density.info="none", colsep=c(1:12),rowsep=c(1:nrow(Combined_Sig_Modules.zs)), sepcolor="black", sepwidth=c(0.01,0.00001), dendrogram="row",cexRow = 2, labRow=FALSE, margins=c(5,13), srtCol=90, colRow = Classification_Test, RowSideColors=Classification_Test, lhei = c(1,100))
 dev.off()
 ### For the Legend
 png("../Figures/Heatmap_Legend_rarefied_rpoB.png", width = 2000, height=4000, pointsize=8)
-fig10 <- heatmap.2(Combined_Sig_Modules.zs, col=hc(100), key=TRUE, symkey=FALSE, trace="none", density.info="none", colsep=c(1:12),rowsep=c(1:nrow(Combined_Sig_Modules.zs)), sepcolor="black", sepwidth=c(0.01,0.00001), dendrogram="row",cexRow = 2, labRow=FALSE, margins=c(5,13), srtCol=90, colRow = Classification_Test[-46], RowSideColors=Classification_Test[-46], lhei = c(1,10))
+fig10 <- heatmap.2(Combined_Sig_Modules.zs, col=hc(100), key=TRUE, symkey=FALSE, trace="none", density.info="none", colsep=c(1:12),rowsep=c(1:nrow(Combined_Sig_Modules.zs)), sepcolor="black", sepwidth=c(0.01,0.00001), dendrogram="row",cexRow = 2, labRow=FALSE, margins=c(5,13), srtCol=90, colRow = Classification_Test, RowSideColors=Classification_Test, lhei = c(1,10))
 dev.off()
 
 # Investigating the Clusters
