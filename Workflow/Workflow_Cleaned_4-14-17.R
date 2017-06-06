@@ -6,7 +6,7 @@ library(gplots)
 library(colorRamps)
 library(dplyr)
 ### Reading in Data Files and Manipulating Datafile
-
+setwd("~/GitHub_Repos/ShadeLab/CentraliaThermophiles/Workflow/")
 # Mapping File
 map <- read.table("Centralia_Collapsed_Map_forR.txt",sep="\t", row.names=1, header=TRUE, stringsAsFactors = FALSE)
 
@@ -73,9 +73,11 @@ colSums(comm_rel)
 
 rdp <- rdp[rowSums(comm.sigs)>1]
 # KEGG Ortholog Table
-
+library(vegan)
+## Assembled and Unassembled
 KO <- read.table("4-13-17abundance_ko_126107.tab.txt", sep="\t", row.names=1, header=TRUE, stringsAsFactors = FALSE)
-KO <- read.table("KO_minus2col_09-27-2016.tab.txt", sep="\t", row.names = 1, header = TRUE, stringsAsFactors = FALSE)
+# Assembled Only
+##KO <- read.table("KO_minus2col_09-27-2016.tab.txt", sep="\t", row.names = 1, header = TRUE, stringsAsFactors = FALSE)
 colnames(KO) <- map_MG$Sample
 row.names(KO) <- sub("KO:", "", row.names(KO))
 KO<- KO[rowSums(KO)>0,]
@@ -84,44 +86,48 @@ KO<- KO[rowSums(KO)>0,]
 #rpoB <- KO["KO:K03043",] + KO["KO:K13798",] ### add the bacterial and archaeal copies together.
 rpoB <- as.numeric(KO["K03043",]) + as.numeric(KO["K13798",])
 # informative Plots
- plot(as.numeric(rpoB), as.numeric(map_MG$SoilTemperature_to10cm))
- plot(as.numeric( KO["K03043",]), as.numeric(map_MG$SoilTemperature_to10cm))
- plot(as.numeric(KO["K13798",]), as.numeric(map_MG$SoilTemperature_to10cm))
+ plot(rpoB, map_MG$SoilTemperature_to10cm)
+ plot(as.numeric( KO["K03043",]), map_MG$SoilTemperature_to10cm)
+ plot(as.numeric(KO["K13798",]), map_MG$SoilTemperature_to10cm)
  plot(as.numeric(KO["K03043",]), as.numeric(KO["K13798",]))
 #
 # Remove KOs with zeroes across the entire dataset
-#KO <- KO[rowSums(KO)>0,]
-#KO <- t(rrarefy(t(KO),11855473))
+#Rarefy for Unassembled and Assembled
+KO.rare <- t(rrarefy(t(KO),11855473))
+#Rarefy for Assembled Only
 #KO <- t(rrarefy(t(KO),10064577))
 rpoB <- as.numeric(KO["K03043",]) + as.numeric(KO["K13798",])
 #Relativze to rpoB
-KO.rpob <- NULL
-for (i in 1:nrow(KO)){
-  KO.rpob <- rbind(KO.rpob, KO[i,]/rpoB)
-}
+#KO.rpob <- NULL
+#for (i in 1:nrow(KO)){
+#  KO.rpob <- rbind(KO.rpob, KO[i,]/rpoB)
+#}
 
-row.names(KO.rpob) <- sub("KO:", "", row.names(KO))
+#row.names(KO.rpob) <- sub("KO:", "", row.names(KO))
 
 # Relativize to rpsM
-KO.rpsM <- NULL
-for(i in 1:nrow(KO)){
-  KO.rpsM<- rbind(KO.rpsM, KO[i,]/KO["K02952",])
-}
-row.names(KO.rpsM) <- row.names(KO.rpob)
+#KO.rpsM <- NULL
+#for(i in 1:nrow(KO)){
+#  KO.rpsM<- rbind(KO.rpsM, KO[i,]/KO["K02952",])
+#}
+#row.names(KO.rpsM) <- row.names(KO.rpob)
 #Relativized to KO count
 KO.rel <- decostand(x=KO, method="total", MARGIN=2)
 row.names(KO.rel) <- sub("KO:","",row.names(KO.rel))
 #Single Copy KO's
-sc_KO <- read.table("Single_Copy_KO.txt", sep="\t", header = FALSE, stringsAsFactors = FALSE)
-sc <- sc_KO[,1]
-SCG_Rel <- KO.rel[sc_KO[,1],] 
-SCG_Absolute <- KO[sc_KO[,1],]
-SCG_Absolute<- SCG_Absolute[-34,]
-SCG_Absolute <- SCG_Absolute[-30,]
+library(readr)
+COG_Key <- read_delim("~/GitHub_Repos/ShadeLab/CentraliaThermophiles/Workflow/Supplemental/He_et_al_COG_to_KEGG.txt","\t", escape_double = FALSE, trim_ws = TRUE)
+COG_Key <- as.data.frame(COG_Key)
+sc <- COG_Key[,3]
+SCG_Rel <- KO.rel[sc,] 
+SCG_Rel <- SCG_Rel[complete.cases(SCG_Rel),]
+SCG_Absolute <- KO[sc,]
+SCG_Absolute <- SCG_Absolute[complete.cases(SCG_Absolute),]
+
 # For use in Odds Ratios
 Average_MG_SCG <- apply(SCG_Rel, 1, mean)
 #For use in Normalizing KEGG Data
-Average_SCG <- apply(SCG_Absolute, 2, mean)
+Average_SCG <- apply(SCG_Absolute, 2, median)
 
 # KOs relatvized to average Single Copy Gene abundance
 
@@ -132,29 +138,23 @@ for(i in 1:nrow(KO)){
 
 KO <- as.data.frame(KO)
 Odds_Ratio <- NULL
-for (i in 1:length(sc)){
-  Odds_Ratio <- rbind(Odds_Ratio, KO.rel[sc[i],]/Average_MG_SCG[i])
+for (i in 1:nrow(SCG_Rel)){
+  Odds_Ratio <- rbind(Odds_Ratio, KO.rel[row.names(SCG_Rel[i,]),]/Average_MG_SCG[i])
 }
 
-#Remove non present single copy genes
-Odds_Ratio <- Odds_Ratio[-34,]
-Odds_Ratio <- Odds_Ratio[-30,]
-
+Odds_Ratio <- Odds_Ratio[complete.cases(Odds_Ratio),]
 
 SCG_Correlations <- NULL
 for(i in 1:nrow(Odds_Ratio)){
   result <- cor.test(map_MG$SoilTemperature_to10cm, as.numeric(Odds_Ratio[i,]))
-  SCG_Correlations <- rbind(SCG_Correlations, unlist(result[1:4]))
+  SCG_Correlations <- rbind(SCG_Correlations,unlist(result[1:4]))
 }
 SCG_Correlations <- as.data.frame(SCG_Correlations)
-SCG_Correlations$Adjusted.p.value <- p.adjust(SCG_Correlations$p.value, "fdr")
+SCG_Correlations$Adjusted.p.value <- p.adjust(SCG_Correlations$p.value, method="fdr")
 SCG_SigCorrelations <- SCG_Correlations[SCG_Correlations$Adjusted.p.value<0.05,]
 
 row.names(SCG_Correlations) <- row.names(Odds_Ratio)
 par(mfrow=c(1,1))
-library(readr)
-COG_Key <- read_delim("~/GitHub_Repos/ShadeLab/CentraliaThermophiles/Workflow/Supplemental/He_et_al_COG_to_KEGG.txt","\t", escape_double = FALSE, trim_ws = TRUE)
-COG_Key <- as.data.frame(COG_Key)
 SCG_Correlations <- as.data.frame(SCG_Correlations)
 SCG_Correlations <- SCG_Correlations[order(row.names(SCG_Correlations)),]
 SCG_Correlations$KEGG <- row.names(SCG_Correlations)
@@ -163,7 +163,7 @@ New_Table <- inner_join(COG_Key, SCG_Correlations, "KEGG")
 ### ggplots Odds_Ratio
 library(reshape2)
 Odds_Ratio
-Odds_Ratio<-Odds_Ratio[Odds_Ratio$C03>0.5,]
+
 
 melt(Odds_Ratio, id.vars=colnames(Odds_Ratio), )
 
@@ -177,7 +177,9 @@ fuller_map <- inner_join(map_MG, sum_stats, by="Sample")
 Joined_Data <- inner_join(MO, fuller_map, by="Sample")
 library(ggplot2)
 ggplot(Joined_Data, aes(x=SoilTemperature_to10cm, y=PercentMapped, color=KO)) + geom_point() +geom_smooth(method="lm", alpha=0)
-odr <- ggplot(Joined_Data, aes(x=SoilTemperature_to10cm, y=Measurement, color=KO)) + geom_point() + geom_smooth(method="lm", alpha=0)
+odr <- ggplot(Joined_Data, aes(x=SoilTemperature_to10cm, y=Measurement, color=KO)) + geom_point() + geom_smooth(method="lm", alpha=0) + guides(color=FALSE)
+
+#odr <- ggplot(Joined_Data, aes(x=SoilTemperature_to10cm, y=Measurement, color=KO)) + geom_point() + geom_smooth(method="lm", alpha=0) + facet_wrap(~KO, nrow=6)
 ggsave("Supplemental/SCG_OddsRation.png", odr)
 
 ### Venn Analysis 16S 
@@ -304,6 +306,12 @@ par(mar=c(5,3,2,2)+0.1)
 fig1=vennDiagram(v)
 dev.off()
 
+
+### KEGG Ortholog Eveness
+s=specnumber(t(KO))
+h=diversity(t(KO), index="shannon")
+pielou = h/log(s)
+
 ### DeNovo Vs Reference OTU Analysis FINISHED
 library(reshape2)
 library(ggplot2)
@@ -313,8 +321,138 @@ map$PercentDeNovo <- Percent_DN
 map.long=melt(map, id.vars=c("Sample", "SoilTemperature_to10cm", "Classification"), measure.vars=c("NO3N_ppm","NH4N_ppm","pH","SulfateSulfur_ppm","K_ppm","Ca_ppm","Mg_ppm","OrganicMatter_500","Fe_ppm", "As_ppm", "P_ppm", "SoilMoisture_Per","PercentDeNovo"))
 
 p <- ggplot(map, aes(SoilTemperature_to10cm, PercentDeNovo))
-p+ geom_point(size=3) + labs(y="Community Novelty", x="Soil Temperature") + theme(axis.text= element_text(size=15), axis.ticks = element_line(size=1)) + xlim(0,60) + ylim(0,0.7)
+p+ geom_point(size=3) + labs(y="Community Novelty", x="Soil Temperature") + geom_smooth(method="lm", alpha=0,colour="black") + theme(axis.text= element_text(size=15), axis.ticks = element_line(size=1)) + ylim(0,0.7)
 ggsave("../Figures/Fig2.eps", width=178, units="mm")
+
+
+# De Novo Otus
+dn_OTUs <- cbind(comm[grep("dn", row.names(comm)),], rdp[grep("dn", row.names(comm))])
+
+dn_tax <- NULL
+for (i in 1:nrow(dn_OTUs)){
+  dn_tax <- rbind(dn_tax,unlist(strsplit(as.character(dn_OTUs[i,19]), ";")))
+}
+
+gg_OTUs <- cbind(comm[grep("dn", row.names(comm), invert=TRUE),], rdp[grep("dn", row.names(comm), invert=TRUE)])
+gg_tax <- NULL
+for (i in 1:nrow(gg_OTUs)){
+  gg_tax <- rbind(gg_tax,unlist(strsplit(as.character(gg_OTUs[i,19]), ";")))
+}
+
+All_Phyla <- unique(c(gg_tax[,2], dn_tax[,2]))
+
+All_Phyla <- sub("k__","",All_Phyla)
+All_Phyla <- sub(" p__", "", All_Phyla)
+All_Phyla <- gsub("\\[|\\]","", All_Phyla)
+All_Phyla <- All_Phyla[-49]
+
+dn_Phyla_Stats <- NULL
+gg_Phyla_Stats <- NULL
+for (i in 1:length(All_Phyla)){
+  x <- tryCatch({sum(dn_OTUs[grep(All_Phyla[i], dn_tax[,2]),1:18])}, error=function(e){return(0)})
+  y <- tryCatch({nrow(dn_OTUs[grep(All_Phyla[i], dn_tax[,2]),1:18])}, error=function(e){return(0)})
+  a <- tryCatch({sum(gg_OTUs[grep(All_Phyla[i], gg_tax[,2]),1:18])}, error=function(e){return(0)})
+  b <- tryCatch({nrow(gg_OTUs[grep(All_Phyla[i], gg_tax[,2]),1:18])}, error=function(e){return(0)})
+  dn_Phyla_Stats <- rbind(dn_Phyla_Stats, c(x, y))
+  gg_Phyla_Stats <- rbind(gg_Phyla_Stats, c(a, b))
+}
+
+
+Results <- NULL
+Percent_Denovo_Phyla <- NULL
+for(i in 1:length(All_Phyla)){
+  x <- tryCatch({colSums(dn_OTUs[grep(All_Phyla[i], dn_tax[,2]),1:18])}, error=function(e){return(rep(0,18))})
+  y <- tryCatch({colSums(gg_OTUs[grep(All_Phyla[i], gg_tax[,2]),1:18])}, error=function(e){return(rep(0,18))})
+  z <- x/(x+y)
+  Percent_Denovo_Phyla <- rbind(Percent_Denovo_Phyla, z)
+  a <- tryCatch({cor.test(z, map$SoilTemperature_to10cm)}, error=function(e){cor.test(c(1,2,3,4), c(1,2,3,4))})
+  Results <- rbind(Results, c(a$statistic, a$parameter, a$p.value, a$estimate))
+}
+Results <- as.data.frame(Results)
+Results$Phylum <- All_Phyla
+row.names(Percent_Denovo_Phyla) <- All_Phyla
+Results<- Results[Results$cor!=1,]
+Results$fdr <- p.adjust(Results$V3, method="fdr")
+subset <- Percent_Denovo_Phyla[c("Acidobacteria","Proteobacteria","Verrucomicrobia"),]
+subset <- rbind(subset, map$SoilTemperature_to10cm)
+row.names(subset) <- c("Acidobacteria","Proteobacteria","Verrucomicrobia", "Soil_temperature")
+melted_subset <- melt(t(subset))
+colnames(melted_subset) <- c("Sample", "Phylum", "Percent_Denovo")
+melted_subset$SoilTemperature <- rep(map$SoilTemperature_to10cm,3)
+
+
+odr <- ggplot(Joined_Data, aes(x=SoilTemperature_to10cm, y=Measurement, color=KO)) + geom_point() + geom_smooth(method="lm", alpha=0) + guides(color=FALSE)
+PPDN <- ggplot(melted_subset, aes(x=SoilTemperature, y=Percent_Denovo, shape=Phylum)) + geom_point(size=3) + geom_smooth(colour="black", method="lm", alpha=0, aes(linetype=factor(Phylum))) + scale_linetype_manual("", values=c(1,2,3)) + scale_shape_manual("", values=c(1,2,3)) +guides(linetype=FALSE, shape=FALSE) +ylim(0,0.7) +theme(axis.text= element_text(size=15), axis.ticks = element_line(size=1))
+ggsave("../Figures/PPDN.eps", plot=PPDN, width=178, units="mm")
+setEPS()
+postscript("../Figures/Phyla.eps", width = 5.000, height=10.000, pointsize=10,paper="special")
+par(mfrow=c(3,1))
+plot( map$SoilTemperature_to10cm,Percent_Denovo_Phyla["Acidobacteria",], main="Acidobacteria", xaxt=NULL, xlab="", yaxt=NULL, ylab="")
+plot(map$SoilTemperature_to10cm, Percent_Denovo_Phyla["Proteobacteria",], main="Proteobacteria", xaxt=NULL, xlab="",yaxt=NULL, ylab="")
+plot(map$SoilTemperature_to10cm, Percent_Denovo_Phyla["Verrucomicrobia",], main="Verrucomicrobia",xaxt=NULL, xlab="",yaxt=NULL, ylab="")
+dev.off()
+
+dn_Phyla_Stats<- as.data.frame(dn_Phyla_Stats)
+gg_Phyla_Stats <- as.data.frame(gg_Phyla_Stats)
+Total_Phyla_Stats <- cbind(All_Phyla, dn_Phyla_Stats, gg_Phyla_Stats)
+Total_Phyla_Stats[,1] <- as.character(Total_Phyla_Stats[,1])
+colnames(Total_Phyla_Stats) <- c("Phylum", "DeNovoReads", "DeNovoOTUs", "GGReads", "GGOTUs")
+
+TPS_Abundant <- Total_Phyla_Stats[(Total_Phyla_Stats[,3]+Total_Phyla_Stats[,5])>1000,]
+TPS_Rare <- Total_Phyla_Stats[(Total_Phyla_Stats[,3]+Total_Phyla_Stats[,5])<1000,]
+
+Other <- TPS_Rare[(TPS_Rare[,3]+TPS_Rare[,5])<50,]
+Other <- c(0, colSums(Other[,2:5]))
+TPS_Rare <- TPS_Rare[(TPS_Rare[,3]+TPS_Rare[,5])>50,]
+TPS_Rare <- rbind(TPS_Rare, Other )
+TPS_Rare[21,1]<- "Other" 
+
+LD_A <- melt(TPS_Abundant, id.vars="Phylum")
+LD_R <- melt(TPS_Rare, id.vars = "Phylum")
+LD_A[,4] <- c(rep("Reads",8), rep("OTUs",8), rep("Reads",8), rep("OTUs",8))
+LD_A[,2] <- c(rep("DeNovo",16), rep("GG", 16))
+
+LD_R[,4] <- c(rep("Reads",21), rep("OTUs",21), rep("Reads",21), rep("OTUs",21))
+LD_R[,2] <- c(rep("DeNovo",42), rep("GG", 42))
+
+colnames(LD_A) <- c("Phylum", "Classification", "Count", "Type")
+LD_A$Type <- factor(LD_A$Type, levels=c("OTUs", "Reads"))
+
+colnames(LD_R) <- c("Phylum", "Classification", "Count", "Type")
+LD_R$Type <- factor(LD_R$Type, levels=c("OTUs", "Reads"))
+
+
+#Long_Data <- melt(Total_Phyla_Stats, id.vars = "Phylum")
+#Long_Data[,4] <- c(rep("Reads", 63), rep("OTUs", 63), rep("Reads", 63), rep("OTUs", 63))
+#Long_Data[,2] <- c(rep("DeNovo", 126), rep("GG", 126))
+
+#colnames(Long_Data) <- c("Phylum", "Classification", "Count", "Type")
+#Long_Data$Type <- factor(Long_Data$Type, levels=c("OTUs","Reads"))
+
+cbPalette <- c("#bdbdbd", "#636363")
+
+ggplot(LD_A, aes(x=Phylum, y=Count, fill=Classification)) + geom_bar(stat="identity", aes(x=Phylum, y=Count)) + facet_wrap(~Type, nrow=2, strip.position="right", scales ="free_y") + theme(strip.background = element_blank(), strip.text.y=element_blank(), axis.text.x = element_text(angle=60, hjust=1, vjust=1, lineheight = rel(2), size=10), axis.title.x= element_text(vjust=1),strip.text.x=element_text(size=rel(2)), axis.text.y=element_text(size=15)) + scale_fill_manual(values=cbPalette) + guides(fill=FALSE)
+ggsave("../Figures/Phylum_DNvsGG_Abundant.jpg", width=75, units="mm")
+ggplot(LD_R, aes(x=Phylum, y=Count, fill=Classification)) + geom_bar(stat="identity", aes(x=Phylum, y=Count)) + facet_wrap(~Type, nrow=2, strip.position="right", scales ="free_y") + theme(strip.background = element_blank(), strip.text.y=element_blank(), axis.text.x = element_text(angle=60, hjust=1, vjust=1, lineheight = rel(2), size=10), axis.title.x= element_text(vjust=1),strip.text.x=element_text(size=rel(2)), axis.text.y=element_text(size=15)) + scale_fill_manual(values=cbPalette) + guides(fill=FALSE)
+ggsave("../Figures/Phylum_DNvsGG_Rare.eps", width=131, units="mm")
+
+ggplot(Long_Data, aes(x=Phylum, y=Count, fill=Classification)) + geom_bar(stat="identity", aes(x=Phylum, y=Count)) + facet_wrap(~Type, nrow=2, strip.position="right", scales ="free_y") + theme(strip.background = element_blank(), strip.text.y=element_blank(), axis.text.x = element_text(angle=60, hjust=1, vjust=1, lineheight = rel(2), size=10), axis.title.x= element_text(vjust=1),strip.text.x=element_text(size=rel(2)), axis.text.y=element_text(size=15)) + scale_fill_manual(values=cbPalette) + guides(fill=FALSE)
+
+
+cbPalette <- c("#f0f0f0", "#636363")
+pa <- ggplot(data=PlotData_A, aes(x=Phylum_Column, y=Proportion, fill=Fill_Categories)) + geom_bar(stat="identity", aes(x=Phylum_Column, y=Proportion), colour="black") + facet_wrap(~Category_f, nrow=3, strip.position="right") + theme(strip.background = element_blank(), strip.text.y=element_blank(), axis.text.x = element_text(angle=60, hjust=1, vjust=1, lineheight = rel(2), size=10), axis.title.x= element_text(vjust=1),strip.text.x=element_text(size=rel(2)), axis.text.y=element_text(size=15)) + guides(fill=FALSE) + scale_fill_manual(values=cbPalette)
+
+pa <- ggplot(data=CA_P, aes(x=Phylum, y=Proportion)) + geom_bar(stat="identity", aes(x=Phylum,y=Proportion)) + facet_wrap(~Category_f, nrow=3, strip.position="right") + theme(strip.background = element_blank(),strip.text.y=element_blank(), axis.text.x = element_text(angle=60, hjust=1, vjust=1, lineheight = rel(2), size=10), axis.title.x= element_text(vjust=1),strip.text.x=element_text(size=rel(2)), axis.text.y=element_blank()) + guides(fill=FALSE)
+
+
+DNR_Rel <- (Total_Phyla_Stats$DeNovoReads/(Total_Phyla_Stats$DeNovoReads+Total_Phyla_Stats$GGReads))
+GGR_Rel <- (Total_Phyla_Stats$GGReads/(Total_Phyla_Stats$DeNovoReads+Total_Phyla_Stats$GGReads))
+DNR_Rel + GGR_Rel
+
+
+
+full <- full_join(dn_Phyla_Stats, gg_Phyla_Stats, by= V1)
+?melt
 
 #Correlation test between Novelty and Soil Temperature
 cor.test(map$SoilTemperature_to10cm, map$PercentDeNovo)
@@ -337,16 +475,97 @@ comm_rel.mat <- as.matrix(comm_rel)
 
 Temp_Full <- as.numeric(map$SoilTemperature_to10cm)
 #Perform Correlation tests 
+fireclass_bin <- gsub(pattern = "Reference", replacement = "Recovered", x = fireclass)
+ThermSites <- rep(1,18)
+ThermSites[Temp_Full<30]<-0 
+
+sum(1*rowSums(comm_rel.mat[,Temp_Full>30])>0)
+comm_therm.mat <- comm_rel.mat[rowSums(comm_rel.mat[,Temp_Full>30])>0,] 
+
 coretest.out=NULL
-for(i in 1:nrow(comm_rel.mat)){
-  results=cor.test(comm_rel.mat[i,],Temp_Full)
-  coretest.out=rbind(coretest.out,c(row.names(comm_rel.mat)[i],results$estimate,results$p.value))
+ttest.out = NULL
+kendall.out <- NULL
+spearman.out <- NULL
+kw.out <- NULL
+for(i in 1:nrow(comm_therm.mat)){
+  results=cor.test(comm_therm.mat[i,],Temp_Full)
+  results.t=t.test(comm_therm.mat[i,]~ThermSites)
+  results.k <- kruskal.test(comm_therm.mat[i,]~ThermSites)
+  spearman <- cor.test(comm_therm.mat[i,], Temp_Full , method="spearman")
+  kendall <- cor.test(comm_therm.mat[i,], Temp_Full, method="kendall")
+  coretest.out=rbind(coretest.out,c(row.names(comm_therm.mat)[i],results$estimate,results$p.value))
+  ttest.out = rbind(ttest.out, c(row.names(comm_therm.mat)[i], results.t[1], results.t[2], results.t[3]))
+  kendall.out <- rbind(kendall.out, c(row.names(comm_therm.mat)[i], kendall[1], kendall[2], kendall[3], kendall[4]))
+  spearman.out <- rbind(spearman.out, c(row.names(comm_therm.mat)[i], spearman[1], spearman[2], spearman[3], spearman[4]))
+ kw.out <- rbind(kw.out, c(row.names(comm_therm.mat)[i], results.k[1], results.k[2], results.k[3])) 
 }
 
-hist(as.numeric(coretest.out[,2]))
+sum(1*(p.adjust(ttest.out[,4], method="fdr")<0.05))
+sum(1*(p.adjust(coretest.out[,3], method="fdr")<0.05))
+spearman.out <- cbind(spearman.out, p.adjust(spearman.out[,4], method="fdr"))
+range(spearman.out[,6])
+sum(1*(spearman.out[,6]<0.05))
+spearsig <- spearman.out[spearman.out[,6]<0.05,]
+spearsig[spearsig[,5]>0,]
+
+range(p.adjust(ttest.out[,4], method="fdr"))
+hist(p.adjust(ttest.out[,4], method="fdr"))
+
+
+fo.out=NULL
+for(i in 1:nrow(FireOnly)){
+  results <- cor.test(as.numeric(FireOnly[i,1:18]), Temp_Full)
+  fo.out <- rbind(fo.out, c(row.names(FireOnly)[i], results[1], results[2], results[3]))
+}
+
+# OTUs present in C10 and/or C13
+therm.otus <- comm_rel[,map$SoilTemperature_to10cm>50]
+therm.otus <- therm.otus[rowSums(therm.otus)>0,]
+therm.comm <- comm_rel[which(row.names(therm.otus)%in%row.names(comm_rel)),]
+therm.out <- NULL
+thermkendall.out <- NULL
+thermspearman.out <- NULL
+for(i in 1:nrow(therm.comm)){
+  results <- cor.test(as.numeric(therm.comm[i,1:18]), Temp_Full)
+  results.spearman <- cor.test(as.numeric(therm.comm[i,1:18]), Temp_Full, method="spearman")
+  results.kendall <- cor.test(as.numeric(therm.comm[i,1:18]), Temp_Full, method="kendall")
+  therm.out <- rbind(therm.out, c(row.names(therm.comm)[i], results[1], results[2], results[3]))
+  thermspearman.out <- rbind(thermspearman.out, c(row.names(therm.comm)[i], results.spearman[1], results.spearman[2], results.spearman[3], results.spearman[4]))
+  thermkendall.out <- rbind(thermkendall.out, c(row.names(therm.comm)[i], results.kendall[1], results.kendall[2], results.kendall[3], results.kendall[4]))
+}
+therm.out <- cbind(therm.out, p.adjust(therm.out[,4], method="fdr"))
+thermspearman.out <- cbind(thermspearman.out, p.adjust(thermspearman.out[,4], method="fdr"))
+thermkendall.out <- cbind(thermkendall.out, p.adjust(thermkendall.out[,4], method="fdr"))
+sig_spearman <- thermspearman.out[thermspearman.out[,6]<0.05,]
+hist(as.numeric(sig_spearman[,5]))
+sig_spearman[sig_spearman[,5]>0,]
+
+# All OTUs present in Fire Affected Sites
+fire_otus <- comm_rel[rowSums(comm_rel[,fireclass_bin=="FireAffected"])>0,]
+fo.out=NULL
+for(i in 1:nrow(fire_otus)){
+  results <- cor.test(as.numeric(fire_otus[i,1:18]), Temp_Full)
+  fo.out <- rbind(fo.out, c(row.names(fire_otus)[i], results[1], results[2], results[3]))
+}
+hist(as.numeric(fo.out[,4]))
+range(p.adjust(as.numeric(fo.out[,4]), method="fdr"))
+
+
+
+cor.test(comm_rel.mat[1,], Temp_Full)
+cor.test(as.numeric(comm[1,]), Temp_Full)
+
+hist(as.numeric(coretest.out[,3]))
+
+#Only look at OTUs present in 9 or more samples
+#Half_or_More <- coretest.out[rowSums(1*(comm_rel>0))>8,]
+#range(p.adjust(Half_or_More[,3], method="fdr"))
+hist(p.adjust(as.numeric(coretest.out[,3]), method="fdr"))
+range(p.adjust(as.numeric(coretest.out[,3]), method="fdr"))
+
 # Only Significant Correlations with Temperature
-sigcor <- coretest.out[coretest.out[,3]<.05,]
-comm_sigcor <- cbind(comm_rel.mat[coretest.out[,3]<.05,],rdp[coretest.out[,3]<.05])
+sigcor <- coretest.out[as.numeric(coretest.out[,3])<.05,]
+comm_sigcor <- cbind(comm_rel.mat[as.numeric(coretest.out[,3])<.05,],rdp[as.numeric(coretest.out[,3])<.05])
 #Only Postive Significant Correlations with Temp
 sigcor_pos <- sigcor[sigcor[,2]>0,]
 comm_sigcor_pos <- comm_sigcor[sigcor[,2]>0,]
@@ -354,8 +573,8 @@ comm_sigcor_pos <- as.data.frame(comm_sigcor_pos)
 hist(as.numeric(sigcor_pos[,2]))
 
 # Designate a dataset with read counts (as opposed to relative abundance) 
-Acomm_sigcor <- cbind(comm[coretest.out[,3]<.05,],rdp[coretest.out[,3]<.05])
-Acomm_sigcor_pos <- Acomm_sigcor[sigcor[,2]>0,]
+Acomm_sigcor <- cbind(comm[as.numeric(coretest.out[,3])<.05,],rdp[as.numeric(coretest.out[,3])<.05])
+Acomm_sigcor_pos <- Acomm_sigcor[as.numeric(sigcor[,2])>0,]
 Acomm_sigcor_pos <- as.data.frame(Acomm_sigcor_pos)
 
 # Getting Taxonomy for temperature correlated OTUs
@@ -723,7 +942,7 @@ b=betadisper(Mod.d, group=Class)
 TukeyHSD(b, which = "group", ordered = FALSE,conf.level = 0.95)
 
 # Distance Matrix based on KO rel
-KO.d <- vegdist(t(KO.rel),method="bray")
+KO.d <- vegdist(t(KO.sr),method="bray")
 
 # Setting up Classifications
 Class <- rep("Red", 12)
@@ -882,7 +1101,7 @@ SignificantModules_Summary$ModuleDescription <- Modules[row.names(Combined_Sig_M
 SignificantModules_Summary<-SignificantModules_Summary[,c(4,11,5,1,2,3,6,7,8,9,10)]
 colnames(SignificantModules_Summary) <- c("Module","Module Description","Completeness","Pearson's Rho", "Pearson's Degrees Freedom", "Peason p value", "Pearson Adjusted p value", "T Statistic", "T Degrees Freedom", "T-test p value", "T Adjusted p value")
 row.names(SignificantModules_Summary) <- row.names(Combined_Sig_Modules)
-write.table(x = SignificantModules_Summary, file="Supplemental/SupplementalTable2_rarefied_TotalRel.txt", sep="\t", quote=FALSE)
+write.table(x = SignificantModules_Summary, file="Supplemental/SupplementalTable2_Averaged_SCG.txt", sep="\t", quote=FALSE)
 
 
 
@@ -937,18 +1156,21 @@ dev.off()
 setEPS()
 postscript("../Figures/Figure5.eps", width = 15, height=15, pointsize=12,paper="special")
 #par(mfrow=c(1,3))
-plot(Module.pcoa$points[,1], Module.pcoa$points[,2],cex=4, bg=class, pch=21, main= "rpoB Relativized Bray Curtis KEGG Module PCoA", xlab= paste("PCoA1: ",100*round(M_ax1.v,3),"% var. explained",sep=""), ylab= paste("PCoA2: ",100* round(M_ax2.v,3),"% var. explained",sep=""))
+plot(.pcoa$points[,1], Module.pcoa$points[,2],cex=4, bg=class, pch=21, main= "Single Copy Gene Median Relativized Bray Curtis KEGG Module PCoA", xlab= paste("PCoA1: ",100*round(M_ax1.v,3),"% var. explained",sep=""), ylab= paste("PCoA2: ",100* round(M_ax2.v,3),"% var. explained",sep=""))
 textxy(X=Module.pcoa$points[,1],Y=Module.pcoa$points[,2], lab=map_MG$Sample,cex=2)
 M_env<- envfit(Module.pcoa,env)
 M_moduleenv <- envfit(Module.pcoa, t(mid_mod))
 plot(M_env, p.max=0.05, col="black")
 
-#plot(KO.pcoa$points[,1], KO.pcoa$points[,2],cex=3, bg=class, pch=21, main= "rpoB Relativized Bray Curtis KEGG Ortholog PCoA", xlab= paste("PCoA1: ",100*round(KO_ax1.v,3),"% var. explained",sep=""), ylab= paste("PCoA2: ",100* round(KO_ax2.v,3),"% var. explained",sep=""))
-#textxy(X=KO.pcoa$points[,1], Y=KO.pcoa$points[,2],labs=map_MG$Sample, cex=2)
+dev.off()
+setEPS()
+postscript("../Figures/Figure5.eps", width = 15, height=15, pointsize=12,paper="special")
+plot(KO.pcoa$points[,1], KO.pcoa$points[,2],cex=3, bg=class, pch=21, main= "SCG Median Relativized Bray Curtis KEGG Ortholog PCoA", xlab= paste("PCoA1: ",100*round(KO_ax1.v,3),"% var. explained",sep=""), ylab= paste("PCoA2: ",100* round(KO_ax2.v,3),"% var. explained",sep=""))
+textxy(X=KO.pcoa$points[,1], Y=KO.pcoa$points[,2],labs=map_MG$Sample, cex=2)
 
-#KO_env=envfit(KO.pcoa, env)
-#plot(KO_env, p.max=0.05, col="black")
-
+KO_env=envfit(KO.pcoa, env)
+plot(KO_env, p.max=0.05, col="black")
+dev.off()
 #plot(uf.pcoa$points[,1],uf.pcoa$points[,2] ,cex=3,pch=21,bg=class,main="Weighted UniFrac PCoA",xlab= paste("PCoA1: ",100*round(uf_ax1.v,3),"% var. explained",sep=""), ylab= paste("PCoA2: ",100* round(uf_ax2.v,3),"% var. explained",sep=""))
 #textxy is from the calibrate library
 #textxy(X=uf.pcoa$points[,1], Y=uf.pcoa$points[,2],labs=map_MG$Sample, cex=2)
