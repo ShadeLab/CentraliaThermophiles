@@ -382,15 +382,22 @@ melted_subset$SoilTemperature <- rep(map$SoilTemperature_to10cm,3)
 
 
 odr <- ggplot(Joined_Data, aes(x=SoilTemperature_to10cm, y=Measurement, color=KO)) + geom_point() + geom_smooth(method="lm", alpha=0) + guides(color=FALSE)
-PPDN <- ggplot(melted_subset, aes(x=SoilTemperature, y=Percent_Denovo, shape=Phylum)) + geom_point(size=3) + geom_smooth(colour="black", method="lm", alpha=0, aes(linetype=factor(Phylum))) + scale_linetype_manual("", values=c(1,2,3)) + scale_shape_manual("", values=c(1,2,3)) +guides(linetype=FALSE, shape=FALSE) +ylim(0,0.7) +theme(axis.text= element_text(size=15), axis.ticks = element_line(size=1))
+PPDN <- ggplot(melted_subset, aes(x=SoilTemperature, y=Percent_Denovo, shape=Phylum)) + geom_point(size=3) + geom_smooth(colour="black", method="lm", alpha=0, aes(linetype=factor(Phylum))) + scale_linetype_manual("", values=c(1,2,3)) + scale_shape_manual("", values=c(1,2,3)) +ylim(0,0.7) +theme(axis.text= element_text(size=15), axis.ticks = element_line(size=1))
 ggsave("../Figures/PPDN.eps", plot=PPDN, width=178, units="mm")
-setEPS()
-postscript("../Figures/Phyla.eps", width = 5.000, height=10.000, pointsize=10,paper="special")
-par(mfrow=c(3,1))
-plot( map$SoilTemperature_to10cm,Percent_Denovo_Phyla["Acidobacteria",], main="Acidobacteria", xaxt=NULL, xlab="", yaxt=NULL, ylab="")
-plot(map$SoilTemperature_to10cm, Percent_Denovo_Phyla["Proteobacteria",], main="Proteobacteria", xaxt=NULL, xlab="",yaxt=NULL, ylab="")
-plot(map$SoilTemperature_to10cm, Percent_Denovo_Phyla["Verrucomicrobia",], main="Verrucomicrobia",xaxt=NULL, xlab="",yaxt=NULL, ylab="")
-dev.off()
+
+Total <- data.frame(1:4,1:4)
+
+Total$Count <- c(nrow(dn_OTUs),nrow(gg_OTUs),sum(dn_OTUs[,1:18]),sum(gg_OTUs[,1:18]))
+Total$DataType <- c("OTUs", "OTUs", "Reads", "Reads")
+Total$OTUType <- c("DN","GG", "DN", "GG")
+Total$Total <- rep("total",4)
+Total <- Total[,3:5]
+
+ggplot(Total, aes(x=total, y=Count, fill=OTUType)) + geom_bar(stat="identity", aes(x=Total, y=Count)) + facet_wrap(~factor(DataType, levels=c("OTUs","Reads")), nrow=2, strip.position="right", scales ="free_y") + theme(strip.background = element_blank(), strip.text.y=element_blank(), axis.text.x = element_text(angle=60, hjust=1, vjust=1, lineheight = rel(2), size=10), axis.title.x= element_text(vjust=1),strip.text.x=element_text(size=rel(2)),axis.title.y=element_blank()) +  scale_fill_manual(values=cbPalette) + guides(fill=FALSE)
+ggplot(Total, aes(x=total, y=Count, fill=OTUType,width=.5)) + geom_bar(stat="identity", aes(x=Total, y=Count)) + facet_wrap(~factor(DataType, levels=c("OTUs","Reads")), nrow=2, strip.position="right", scales ="free_y") + theme(strip.background = element_blank(), strip.text.y=element_blank(), axis.text.x = element_blank(), axis.title.x= element_blank(),strip.text.x=element_blank(),axis.text.y=element_blank(),axis.title.y=element_blank()) + scale_fill_manual(values=cbPalette) + guides(fill=FALSE)
+
+ggsave("../Figures/TotalDNvsGG_Abundant.jpg", width=20, units="mm")
+
 
 dn_Phyla_Stats<- as.data.frame(dn_Phyla_Stats)
 gg_Phyla_Stats <- as.data.frame(gg_Phyla_Stats)
@@ -431,12 +438,15 @@ LD_R$Type <- factor(LD_R$Type, levels=c("OTUs", "Reads"))
 
 cbPalette <- c("#bdbdbd", "#636363")
 
-ggplot(LD_A, aes(x=Phylum, y=Count, fill=Classification)) + geom_bar(stat="identity", aes(x=Phylum, y=Count)) + facet_wrap(~Type, nrow=2, strip.position="right", scales ="free_y") + theme(strip.background = element_blank(), strip.text.y=element_blank(), axis.text.x = element_text(angle=60, hjust=1, vjust=1, lineheight = rel(2), size=10), axis.title.x= element_text(vjust=1),strip.text.x=element_text(size=rel(2)), axis.text.y=element_text(size=15)) + scale_fill_manual(values=cbPalette) + guides(fill=FALSE)
-ggsave("../Figures/Phylum_DNvsGG_Abundant.jpg", width=75, units="mm")
-ggplot(LD_R, aes(x=Phylum, y=Count, fill=Classification)) + geom_bar(stat="identity", aes(x=Phylum, y=Count)) + facet_wrap(~Type, nrow=2, strip.position="right", scales ="free_y") + theme(strip.background = element_blank(), strip.text.y=element_blank(), axis.text.x = element_text(angle=60, hjust=1, vjust=1, lineheight = rel(2), size=10), axis.title.x= element_text(vjust=1),strip.text.x=element_text(size=rel(2)), axis.text.y=element_text(size=15)) + scale_fill_manual(values=cbPalette) + guides(fill=FALSE)
-ggsave("../Figures/Phylum_DNvsGG_Rare.eps", width=131, units="mm")
+ggplot(LD_A, aes(x=Phylum, y=Count, fill=Classification)) + geom_bar(stat="identity", aes(x=Phylum, y=Count)) + facet_wrap(~Type, nrow=2, strip.position="right", scales ="free_y") + theme(strip.background = element_blank(), strip.text.y=element_blank(), axis.text.x = element_text(angle=75, hjust=1, vjust=1, lineheight = rel(2), size=10), axis.title.x= element_text(vjust=1),strip.text.x=element_text(size=rel(2)),axis.text.y=element_blank(),axis.title.y=element_blank()) + scale_fill_manual(values=cbPalette) + guides(fill=FALSE)
+ggplot(LD_A, aes(x=Phylum, y=Count, fill=Classification)) + geom_bar(stat="identity", aes(x=Phylum, y=Count)) + facet_wrap(~Type, nrow=2, strip.position="right", scales ="free_y") + theme(strip.background = element_blank(), strip.text.y=element_blank(), axis.text.x = element_blank(), axis.title.x= element_blank(),strip.text.x=element_blank(),axis.text.y=element_blank(),axis.title.y=element_blank()) + scale_fill_manual(values=cbPalette) + guides(fill=FALSE)
+ggsave("../Figures/Phylum_DNvsGG_Abundant.jpg", width=80, units="mm")
+ggplot(LD_R, aes(x=Phylum, y=Count, fill=Classification)) + geom_bar(stat="identity", aes(x=Phylum, y=Count)) + facet_wrap(~Type, nrow=2, strip.position="right", scales ="free_y") + theme(strip.background = element_blank(), strip.text.y=element_blank(), axis.text.x = element_blank(), axis.title.x= element_blank(),strip.text.x=element_text(size=rel(2)), axis.text.y=element_blank(),axis.title.y=element_blank()) + scale_fill_manual(values=cbPalette) + guides(fill=FALSE)
+ggsave("../Figures/Phylum_DNvsGG_Rare.jpg", width=210, units="mm")
 
-ggplot(Long_Data, aes(x=Phylum, y=Count, fill=Classification)) + geom_bar(stat="identity", aes(x=Phylum, y=Count)) + facet_wrap(~Type, nrow=2, strip.position="right", scales ="free_y") + theme(strip.background = element_blank(), strip.text.y=element_blank(), axis.text.x = element_text(angle=60, hjust=1, vjust=1, lineheight = rel(2), size=10), axis.title.x= element_text(vjust=1),strip.text.x=element_text(size=rel(2)), axis.text.y=element_text(size=15)) + scale_fill_manual(values=cbPalette) + guides(fill=FALSE)
+ggplot(LD_R, aes(x=Phylum, y=Count, fill=Classification)) + geom_bar(stat="identity", aes(x=Phylum, y=Count)) + facet_wrap(~Type, nrow=2, strip.position="right", scales ="free_y") + theme(strip.background = element_blank(), strip.text.y=element_blank(), axis.text.x = element_text(angle=75, hjust=1, vjust=1, lineheight = rel(2), size=10), axis.title.x= element_text(vjust=1),strip.text.x=element_text(size=rel(2)), axis.text.y=element_blank(),axis.title.y=element_blank()) + scale_fill_manual(values=cbPalette) + guides(fill=FALSE)
+
+ggplot(Long_Data, aes(x=Phylum, y=Count, fill=Classification)) + geom_bar(stat="identity", aes(x=Phylum, y=Count)) + facet_wrap(~Type, nrow=2, strip.position="right", scales ="free_y") + theme(strip.background = element_blank(), strip.text.y=element_blank(), axis.text.x = element_text(angle=0, hjust=1, vjust=1, lineheight = rel(2), size=10), axis.title.x= element_text(vjust=1),strip.text.x=element_text(size=rel(2)), axis.text.y=element_text(size=15)) + scale_fill_manual(values=cbPalette) + guides(fill=FALSE)
 
 
 cbPalette <- c("#f0f0f0", "#636363")
@@ -801,7 +811,7 @@ Modules["M00616",3] <- paste(c(Modules["M00185",3],Modules["M00176",3]), collaps
   #}
 #}
 
-# Relativized to Average Single Copy Gener count
+# Relativized to Average Single Copy Gene count
 for (y in 1:nrow(KO.sr)){
   KO_M <- grep(row.names(KO.sr)[y], Modules$Definition)
   if (length(KO_M)>0){
@@ -1082,8 +1092,48 @@ hc=colorRampPalette(c("#91bfdb","white","#fc8d59"), interpolate="linear")
 
 
 Combined_Sig_Modules.zs <- decostand(as.matrix(Combined_Sig_Modules), method="standardize", MARGIN=1)
-par(mfrow=c(1,1))
+
+Pos_Temp_Cor_Modules <- Combined_Sig_Modules[Combined_Sig_Module_Results$estimate>0,]
+Pos_Temp_Cor_Modules <- Pos_Temp_Cor_Modules[complete.cases(Pos_Temp_Cor_Modules),]
+Pos_Temp_Cor_Modules <- rbind(Pos_Temp_Cor_Modules, Combined_Sig_Modules["M00432",])
+#Positively Correlated Modules z-scored
+PCM.zs <- decostand(as.matrix(Pos_Temp_Cor_Modules), method="standardize", MARGIN=1)
+
+PCM.zs <- PCM.zs[,order(map_MG$SoilTemperature_to10cm)]
+
+# Plot and Save PCM Heatmap
 setEPS()
+png("../Figures/PCM.png", width = 500, height=1000, pointsize=8)
+heatmap.2(PCM.zs, col=hc(100), key=TRUE, symkey=TRUE, trace="none", colsep=c(1:12),rowsep=c(1:nrow(PCM.zs)), sepcolor="black", Colv=FALSE, sepwidth=c(0.01,0.00001),labRow = FALSE, dendrogram="row",cexRow = 1, margins=c(5,13), srtCol=90, lhei=c(1,100))
+dev.off()
+
+# Plot and Save PCM heatmap Key
+setEPS()
+
+png("../Figures/PCM_Key.png", width = 500, height=500, pointsize=8)
+heatmap.2(PCM.zs, col=hc(100), key=TRUE, symkey=TRUE, trace="none",density.info = "none", colsep=c(1:12),rowsep=c(1:nrow(PCM.zs)), sepcolor="black", Colv=FALSE, sepwidth=c(0.01,0.00001),labRow = FALSE, dendrogram="row",cexRow = 1, margins=c(5,13), srtCol=90)
+dev.off()
+
+# Negative Temp Cor Modules
+Neg_Temp_Cor_Modules <- Combined_Sig_Modules[Combined_Sig_Module_Results$estimate<0,]
+Neg_Temp_Cor_Modules <- Neg_Temp_Cor_Modules[complete.cases(Neg_Temp_Cor_Modules),]
+# Z-score Negative Correlated Modules
+NCM.zs <- decostand(as.matrix(Neg_Temp_Cor_Modules), method="standardize", MARGIN = 1)
+NCM.zs <- NCM.zs[,order(map_MG$SoilTemperature_to10cm)]
+
+# Plot and Save NCM heatmap
+setEPS()
+png("../Figures/NCM.png", width = 500, height=1000, pointsize=8)
+heatmap.2(NCM.zs, col=hc(100), key=FALSE, symkey=TRUE, trace="none", colsep=c(1:12), sepcolor="black", Colv=FALSE, sepwidth=c(0.01,0.0000001), dendrogram="row",cexRow = 1,lhei=c(1,100), labRow=FALSE, margins=c(5,13), srtCol=90)
+dev.off()
+par(mfrow=c(1,1))
+# Plot and Sace NCM heatmap Key
+setEPS()
+png("../Figures/NCM_Key.png", width = 500, height=500, pointsize=8)
+heatmap.2(NCM.zs, col=hc(100), key=TRUE, symkey=TRUE, trace="none",density.info = "none", colsep=c(1:12),rowsep=c(1:nrow(NCM.zs)), sepcolor="black", Colv=FALSE, sepwidth=c(0.01,0.00001),labRow = FALSE, dendrogram="row",cexRow = 1, margins=c(5,13), srtCol=90)
+dev.off()
+
+
 
 png("../Figures/Heatmap_Combined_averageSCG.png", width = 2000, height=4000, pointsize=8)
 fig10 <- heatmap.2(Combined_Sig_Modules.zs, col=hc(100), key=FALSE, symkey=FALSE, trace="none", density.info="none", colsep=c(1:12),rowsep=c(1:nrow(Combined_Sig_Modules.zs)), sepcolor="black", sepwidth=c(0.01,0.00001), dendrogram="row",cexRow = 2, labRow=FALSE, margins=c(5,13), srtCol=90, colRow = Classification_Test, RowSideColors=Classification_Test, lhei = c(1,100))
@@ -1101,14 +1151,44 @@ SignificantModules_Summary$ModuleDescription <- Modules[row.names(Combined_Sig_M
 SignificantModules_Summary<-SignificantModules_Summary[,c(4,11,5,1,2,3,6,7,8,9,10)]
 colnames(SignificantModules_Summary) <- c("Module","Module Description","Completeness","Pearson's Rho", "Pearson's Degrees Freedom", "Peason p value", "Pearson Adjusted p value", "T Statistic", "T Degrees Freedom", "T-test p value", "T Adjusted p value")
 row.names(SignificantModules_Summary) <- row.names(Combined_Sig_Modules)
-write.table(x = SignificantModules_Summary, file="Supplemental/SupplementalTable2_Averaged_SCG.txt", sep="\t", quote=FALSE)
+write.table(x = SignificantModules_Summary, file="Supplemental/SupplementalTable2_Median_SCG.txt", sep="\t", quote=FALSE)
 
 
+# Plotting DeNitrification and Sulfate Reduction Modules against Temperature and Sulfur and Nitrogen Measurements
 
+# Denitrification
+DNitrate <- Combined_Sig_Modules["M00529",]
 
+#Dissimilatory Nitrate Reduction
+DNR <- Combined_Sig_Modules["M00530",]
 
+# Dissimilalry Sulfate Reduction
+DSR <- Combined_Sig_Modules["M00596",]
 
+plot(map_MG$SulfateSulfur_ppm, as.numeric(DSR))
 
+ModuleAnalysis <- rbind(DNitrate, DNR, DSR, map_MG$SoilTemperature_to10cm, map_MG$NO3N_ppm, map_MG$NH4N_ppm, map_MG$SulfateSulfur_ppm)
+row.names(ModuleAnalysis) <- c("M00529","M00530", "M00596", "Temperature", "Nitrate", "Ammonium", "Sulfate_Sulfur")
+ModuleAnalysis <- t(ModuleAnalysis)
+ModuleAnalysis<- as.data.frame(ModuleAnalysis)
+
+ggplot(ModuleAnalysis, aes(x=Temperature, y=M00529)) + geom_point()
+ggplot(ModuleAnalysis, aes(x=Nitrate, y=M00529)) + geom_point() 
+ggsave("../Figures/DNitrate_Nitrate.eps", width=100, height=75, units="mm")
+ggplot(ModuleAnalysis, aes(x=Ammonium, y=M00529)) + geom_point() 
+
+cor.test(x = ModuleAnalysis$Temperature, y=ModuleAnalysis$M00529)
+cor.test(x=ModuleAnalysis$Nitrate, y=ModuleAnalysis$M00529)
+
+ggplot(ModuleAnalysis, aes(x=Nitrate, y=M00530)) + geom_point() 
+ggsave("../Figures/DNR_Nitrate.eps", width=100, height=75, units="mm")
+ggplot(ModuleAnalysis, aes(x=Ammonium, y=M00530)) + geom_point()
+cor.test(x=ModuleAnalysis$Nitrate, y=ModuleAnalysis$M00530)
+cor.test(x=ModuleAnalysis$Ammonium, y=ModuleAnalysis$M00530)
+
+ggplot(ModuleAnalysis, aes(x=Sulfate_Sulfur, y=M00596)) + geom_point() 
+cor.test(x=ModuleAnalysis$Sulfate_Sulfur, y=ModuleAnalysis$M00596)
+ggsave("../Figures/DSR.eps", width=100, height=75, units="mm")
 
 
 ### Indicator Module Analysis
@@ -1156,11 +1236,11 @@ dev.off()
 setEPS()
 postscript("../Figures/Figure5.eps", width = 15, height=15, pointsize=12,paper="special")
 #par(mfrow=c(1,3))
-plot(.pcoa$points[,1], Module.pcoa$points[,2],cex=4, bg=class, pch=21, main= "Single Copy Gene Median Relativized Bray Curtis KEGG Module PCoA", xlab= paste("PCoA1: ",100*round(M_ax1.v,3),"% var. explained",sep=""), ylab= paste("PCoA2: ",100* round(M_ax2.v,3),"% var. explained",sep=""))
+plot(Module.pcoa$points[,1], Module.pcoa$points[,2],cex=4, bg=class, pch=21, main= "Single Copy Gene Median Relativized Bray Curtis KEGG Module PCoA", xlab= paste("PCoA1: ",100*round(M_ax1.v,3),"% var. explained",sep=""), ylab= paste("PCoA2: ",100* round(M_ax2.v,3),"% var. explained",sep=""))
 textxy(X=Module.pcoa$points[,1],Y=Module.pcoa$points[,2], lab=map_MG$Sample,cex=2)
 M_env<- envfit(Module.pcoa,env)
 M_moduleenv <- envfit(Module.pcoa, t(mid_mod))
-plot(M_env, p.max=0.05, col="black")
+plot(M_env, p.max=0.05, col="black", lwd=3)
 
 dev.off()
 setEPS()
