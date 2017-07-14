@@ -6,13 +6,13 @@ library(gplots)
 library(colorRamps)
 library(dplyr)
 ### Reading in Data Files and Manipulating Datafile
-setwd("~/GitHub_Repos/ShadeLab/CentraliaThermophiles/Workflow/")
+setwd("~/GitHub_Repos/ShadeLab/CentraliaThermophiles/JGI_Metagenomes/")
 # Mapping File
-map <- read.table("Centralia_Collapsed_Map_forR.txt",sep="\t", row.names=1, header=TRUE, stringsAsFactors = FALSE)
+map <- read.table("Input_Files/Centralia_Collapsed_Map_forR.txt",sep="\t", row.names=1, header=TRUE, stringsAsFactors = FALSE)
 
 map_MG <- map[c(1,3,4,5,6,7,10,12,14,15,16,17),]
 
-sum_stats <- read.table("../Centralia_Metagenome_Summary_Stats.txt", sep="\t", header=TRUE, row.names=1)
+sum_stats <- read.table("Input_Files/Centralia_Metagenome_Summary_Stats.txt", sep="\t", header=TRUE, row.names=1)
 sum_stats <- sum_stats[,-10]
 sum_stats$PercentMapped <- sum_stats$Aligned.Reads/sum_stats$Quality.Reads
 
@@ -23,13 +23,13 @@ CO2_MG_2015 <- CO2_2015[c(1,3,4,5,6,7,10,12,14,15,16,17)]
 t.test(CO2_MG_2015[map_MG$Classification=="FireAffected"], CO2_MG_2015[map_MG$Classification!="FireAffected"])
 
 # Alpha Diversity
-alpha <- read.table("MASTER_OTU_hdf5_filteredfailedalignments_rdp_rmCM_collapse_even321000_alphadiv.txt", sep="\t", stringsAsFactors = FALSE, header=TRUE, row.names = 1)
+alpha <- read.table("Input_Files/MASTER_OTU_hdf5_filteredfailedalignments_rdp_rmCM_collapse_even321000_alphadiv.txt", sep="\t", stringsAsFactors = FALSE, header=TRUE, row.names = 1)
 
 alpha <- alpha[order(row.names(alpha)),]
 alpha_MG <- alpha[c(1,3,4,5,6,7,10,12,14,15,16,17),]
 
 setEPS()
-postscript("../Figures/MGStatsVs16Sstats.eps", width = 5, height=5, pointsize=8,paper="special")
+postscript("Figures/MGStatsVs16Sstats.eps", width = 5, height=5, pointsize=8,paper="special")
 par(mfrow=c(2,2))
 fig = plot(alpha_MG$PD_whole_tree, sum_stats$PercentMapped, ylab="Percent Reads Mapped", xlab="PD") 
 plot(alpha_MG$observed_otus, sum_stats$PercentMapped, ylab="Percent Reads Mapped", xlab="OTUs")
@@ -56,7 +56,7 @@ grubbs.test(sum_stats$Assembled.Length, type=20)
 
 
 # 16S OTU Table
-comm <- read.table("MASTER_OTU_hdf5_filteredfailedalignments_rdp_rmCM_collapse_even321000.txt", sep="\t", row.names=1, header=TRUE, stringsAsFactors = FALSE)
+comm <- read.table("Input_Files/MASTER_OTU_hdf5_filteredfailedalignments_rdp_rmCM_collapse_even321000.txt", sep="\t", row.names=1, header=TRUE, stringsAsFactors = FALSE)
 rdp<- comm[,19]
 rdp.sigs <- rdp
 comm<-comm[,-19]
@@ -75,7 +75,7 @@ rdp <- rdp[rowSums(comm.sigs)>1]
 # KEGG Ortholog Table
 library(vegan)
 ## Assembled and Unassembled
-KO <- read.table("4-13-17abundance_ko_126107.tab.txt", sep="\t", row.names=1, header=TRUE, stringsAsFactors = FALSE)
+KO <- read.table("Input_Files/4-13-17abundance_ko_126107.tab.txt", sep="\t", row.names=1, header=TRUE, stringsAsFactors = FALSE)
 # Assembled Only
 ##KO <- read.table("KO_minus2col_09-27-2016.tab.txt", sep="\t", row.names = 1, header = TRUE, stringsAsFactors = FALSE)
 colnames(KO) <- map_MG$Sample
@@ -182,7 +182,7 @@ library(dplyr)
 fuller_map <- inner_join(map_MG, sum_stats, by="Sample")
 Joined_Data <- inner_join(y, fuller_map, by="Sample")
 colnames(Joined_Data)[10] <- "Temperature"
-ggplot(Joined_Data, aes(x=SoilTemperature_to10cm, y=PercentMapped, color=KO)) + geom_point() +geom_smooth(method="lm", alpha=0) + theme_bw(base_size=12)
+ggplot(Joined_Data, aes(x=Temperature, y=PercentMapped, color=KO)) + geom_point() +geom_smooth(method="lm", alpha=0) + theme_bw(base_size=12)
 
 z <- cor.test(Joined_Data$Temperature, Joined_Data$Measurement)
 odr <- ggplot(Joined_Data, aes(x=Temperature, y=Measurement)) + geom_point(size=1.5)  + guides(color=FALSE) + theme_bw(base_size=12) + theme(text=element_text(size=8), axis.text = element_text(size=8)) +labs(x=expression("Temperature " ( degree~C)), y="Odds Ratio") + annotate("text", x=44, y=1.4, label=paste("Pearson's r =",round(as.numeric(z[4]),3)), size=2.9) + scale_y_continuous(limits=c(.5,1.5))
@@ -193,13 +193,13 @@ cor.test(Joined_Data$Temperature, Joined_Data$Measurement)
 #odr <- ggplot(Joined_Data, aes(x=SoilTemperature_to10cm, y=Measurement, color=KO)) + geom_point() + geom_smooth(method="lm", alpha=0) + facet_wrap(~KO, nrow=6)
 
 
-JGI_Archaea <- read.table("../JGI_Archaea_06192017.txt", sep="\t", header=TRUE, row.names=NULL, stringsAsFactors = FALSE, fill=TRUE, quote="")
+JGI_Archaea <- read.table("Input_Files/JGI_Archaea_06192017.txt", sep="\t", header=TRUE, row.names=NULL, stringsAsFactors = FALSE, fill=TRUE, quote="")
 
 Permanent_Archaea <- JGI_Archaea[grepl("Permanent", JGI_Archaea$Status),]
 Finished_Archaea <- JGI_Archaea[grepl("Finished",JGI_Archaea$Status),]
 
 
-JGI_Bacteria <- read.table("../JGI_Bacteria_06192017.txt", sep="\t", header=TRUE, row.names=NULL, stringsAsFactors = FALSE, fill=TRUE, quote="")
+JGI_Bacteria <- read.table("Input_Files/JGI_Bacteria_06192017.txt", sep="\t", header=TRUE, row.names=NULL, stringsAsFactors = FALSE, fill=TRUE, quote="")
 
 Permanent_Bacteria <- JGI_Bacteria[grepl("Permanent", JGI_Bacteria$Status),]
 Finished_Bacteria <- JGI_Bacteria[grepl("Finished", JGI_Bacteria$Status),]
@@ -235,7 +235,7 @@ for(i in 1:length(Not_Present)){
   Phylogeny<-gsub(Not_Present[i], "Bacteria", Phylogeny )
 }
 
-GG_to_JGI <- read.table("../GG_to_JGI.txt", header=FALSE, row.names=NULL, sep="\t", stringsAsFactors = FALSE)
+GG_to_JGI <- read.table("Input_Files/GG_to_JGI.txt", header=FALSE, row.names=NULL, sep="\t", stringsAsFactors = FALSE)
 
 for(i in 1:nrow(GG_to_JGI)){
   Phylogeny <- gsub(GG_to_JGI[i,1], GG_to_JGI[i,2], Phylogeny)
@@ -393,11 +393,10 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
 
 mp <- multiplot(odr, rRNA_Size_Estimate, Dummy_plot, MCensus_Size_Estimate, cols=2)
 setEPS()
-postscript("Figure1_AverageGenomeSize.eps",  width= 3, height=6)
+postscript("Figures/Figure1_AverageGenomeSize.eps",  width= 3, height=6)
 par(ps = 8, cex = 1, cex.main = 1)
 mp <- multiplot(odr, MCensus_Size_Estimate,rRNA_Size_Estimate, cols=1)
 dev.off()
-ggsave("Supplemental/SCG_OddsRation.png", odr)
 
 
 ### KEGG Ortholog Eveness
@@ -407,7 +406,7 @@ pielou = h/log(s)
 
 ### KEGG Module Analysis
 library(stringr)
-Modules <- read.table("kmodlist47982_23-nov-2016.txt", sep="\t", header=TRUE, row.names=1, stringsAsFactors = FALSE)
+Modules <- read.table("Input_Files/kmodlist47982_23-nov-2016.txt", sep="\t", header=TRUE, row.names=1, stringsAsFactors = FALSE)
 
 MO_Per_M <- rep(0,nrow(Modules))
 for (i in 1:nrow(Modules)){
@@ -592,14 +591,32 @@ mid_mod <- mid_mod[rowSums(mid_mod)!=0,]
 
 ###   ***Multivariate Analysis based on Modules, KO, and 16S*** 
 # Distance Matrix based on Weighted unifrac
-uf=read.table("weighted_unifrac_MASTER_OTU_hdf5_filteredfailedalignments_rdp_rmCM_collapse_even321000.txt", header=TRUE, row.names=1)
+uf=read.table("Input_Files/weighted_unifrac_MASTER_OTU_hdf5_filteredfailedalignments_rdp_rmCM_collapse_even321000.txt", header=TRUE, row.names=1)
 uf=uf[order(row.names(uf)),order(colnames(uf))]
 # Subsetting to only the samples we have metagenomes for...
 uf_mg <- uf[c(1,3,4,5,6,7,10,12,14,15,16,17),c(1,3,4,5,6,7,10,12,14,15,16,17)]
 uf_mg.d <- as.dist(uf_mg)
 
+# JGI Enzyme, pfam, COG datatables
+enzyme <- read.table("Input_Files/abundance_enzyme_79244.txt", sep="\t", header=TRUE, row.names = 1, stringsAsFactors = FALSE)
+colnames(enzyme) <- map_MG$Sample
+enzyme.rel <- decostand(enzyme, MARGIN = 2, method="total")
+enzyme.d <- vegdist(t(enzyme.rel), method = "bray")
+
+cog <- read.table("Input_Files/abundance_cog_79133.txt", stringsAsFactors = FALSE, header = TRUE, row.names = 1)
+colnames(cog) <- map_MG$Sample
+cog.rel <- decostand(cog, MARGIN=2, method="total")
+cog.d<- vegdist(t(cog.rel), method="bray")
+
+pfam <- read.table("Input_Files/abundance_pfam_72927.txt", stringsAsFactors = FALSE, header=TRUE, row.names = 1)
+colnames(pfam) <- map_MG$Sample
+pfam.rel <- decostand(pfam, MARGIN=2, method="total")
+pfam.d <- vegdist(t(pfam.rel), method="bray")
+
+
 # Distance matrix based on Modules
 Mod.d <- vegdist(t(mid_mod),method="bray")
+Mod_sub.d <- vegdist(t(mid_mod[,-12]), method="bray")
 Class <- rep("Red", 12)
 Class[map_MG$Classification!="FireAffected"] <- "Green"
 a=adonis(Mod.d~Class, distance=TRUE, permutations=1000)
@@ -608,6 +625,8 @@ a
 b=betadisper(Mod.d, group=Class)
 TukeyHSD(b, which = "group", ordered = FALSE,conf.level = 0.95)
 
+b.sub= betadisper(Mod_sub.d, group=Class[-12])
+TukeyHSD(b.sub, which="group", ordered=FALSE, conf.level = 0.95)
 # Distance Matrix based on KO rel
 KO.d <- vegdist(t(KO.sr),method="bray")
 
@@ -665,6 +684,19 @@ plot(as.numeric(space.d.mg), as.matrix(uf_mg.d))
 M_v_Space.mantel <- mantel(Mod.d, space.d.mg)
 K_v_Space.mantel <- mantel(KO.d, space.d.mg)
 U_v_Space.mantel <- mantel(uf_mg.d, space.d.mg)
+
+M_v_cog.mantel <- mantel(Mod.d, cog.d)
+M_v_enzyme.mantel <- mantel(Mod.d, enzyme.d)
+M_v_pfam.mantel <- mantel(Mod.d, pfam.d)
+
+# Database Comparisons 
+dbs <- read.table("Input_Files/DB_Comparison.txt", sep="\t", stringsAsFactors = FALSE, header = TRUE, row.names = 1)
+colnames(dbs) <- c("COG", "pfam", "Enzyme", "KO")
+dbs$Site <- row.names(dbs)
+dbs_melted <- melt(dbs, id.vars = "Site")
+dbc <- ggplot(dbs_melted, aes(x=variable, y=value)) + geom_boxplot() +labs(x="Database", y="Percentage of Genes")
+ggsave("Supplemental/DB_Comparison.png", device = "png", dbc)
+
 
 Distance1 <-c("Module", "Module", "Module", "KO", "KO", "UniFrac")
 Distance2<- c("KO", "UniFrac", "Space","UniFrac", "Space", "Space")
