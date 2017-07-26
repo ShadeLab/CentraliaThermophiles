@@ -802,15 +802,9 @@ NCM.zs <- decostand(as.matrix(Neg_Temp_Cor_Modules), method="standardize", MARGI
 NCM.zs <- NCM.zs[,order(map_MG$SoilTemperature_to10cm)]
 
 
-# Plot and Save PCM Heatmap
-setEPS()
-png("../Figures/PCM.png", width = 500, height=1000, pointsize=8)
-heatmap.2(PCM.zs, col=hc(100), key=TRUE, symkey=TRUE, trace="none", colsep=c(1:12),rowsep=c(1:nrow(PCM.zs)), sepcolor="black", Colv=FALSE, sepwidth=c(0.01,0.00001),labRow = row.names(PCM.zs), dendrogram="row",cexRow = 1, margins=c(5,13), srtCol=90, lhei=c(1,100))
-dev.off()
-
 # Plot and Save PCM heatmap Key
 setEPS()
-postscript("../Figures/PCM_Key.eps", width = 4, height=8)
+postscript("Figures/PCM_Key.eps", width = 3.4, height=9)
 par(ps = 12, cex = 1, cex.main = 1)
 heatmap.2(PCM.zs, col=hc(100), key=TRUE, symkey=TRUE, trace="none",density.info = "none", colsep=c(1:12),rowsep=c(1:nrow(PCM.zs)), sepcolor="black", Colv=FALSE, sepwidth=c(0.01,0.00001),labRow = row.names(PCM.zs), dendrogram="row",cexRow = 1, srtCol=90, lmat= rbind(c(3,4),c(2,1)), lhei=c(1,4))
 dev.off()
@@ -818,16 +812,14 @@ dev.off()
 
 # Plot and Save NCM heatmap
 setEPS()
-postscript("../Figures/NCM.eps", width = 4, height=8)
+postscript("Figures/NCM.eps", width = 3.4, height=9)
 par(ps = 12, cex = 1, cex.main = 1)
 heatmap.2(NCM.zs, col=hc(100),key=TRUE, symkey=TRUE, trace="none", colsep=c(1:12),density.info="none", sepcolor="black", Colv=FALSE, sepwidth=c(0.01,0.0000001), dendrogram="row",cexRow = 1, labRow=FALSE, srtCol=90,lmat=rbind(c(3,4),c(2,1)), lhei=c(1,4))
 dev.off()
 par(mfrow=c(1,1))
-# Plot and Sace NCM heatmap Key
-setEPS()
-png("../Figures/NCM_Key.png", width = 500, height=500, pointsize=8)
-heatmap.2(NCM.zs, col=hc(100), key=TRUE, symkey=TRUE, trace="none",density.info = "none", colsep=c(1:12),rowsep=c(1:nrow(NCM.zs)), sepcolor="black", Colv=FALSE, sepwidth=c(0.01,0.00001),labRow = FALSE, dendrogram="row",cexRow = 1, margins=c(5,13), srtCol=90)
-dev.off()
+# Plot and Save NCM heatmap Key
+
+
 
 Complete <- Complete[complete.cases(Complete$KEGG),] 
 row.names(Complete) <- Complete$KEGG
@@ -908,6 +900,18 @@ ggplot(ModuleAnalysis, aes(x=Sulfate_Sulfur, y=M00596)) + geom_point()
 cor.test(x=ModuleAnalysis$Sulfate_Sulfur, y=ModuleAnalysis$M00596)
 ggsave("../Figures/DSR.eps", width=100, height=75, units="mm")
 
+ModuleAnalysis$Site <- row.names(ModuleAnalysis)
+melt(ModuleAnalysis, id.vars ="Site")
+
+Metabolism <- ModuleAnalysis[,1:3]
+Metabolism$Site <- row.names(ModuleAnalysis)
+
+Metabolism <- melt(Metabolism, id.vars = "Site")
+Metabolism$Temperature <- rep(ModuleAnalysis$Temperature, 3)
+
+ggplot(Metabolism, aes(x=Temperature, y=value, color=variable)) + geom_smooth(method="lm") + geom_point()
+
+M_plot <- ggplot(Metabolism, aes(x=Temperature, y=value, color=variable)) + geom_smooth(method="lm", inherit.aes=TRUE, se=0) + geom_point(inherit.aes = TRUE) + guides(color=FALSE) + theme_bw(base_size=8) + theme(text=element_text(size=8), axis.text = element_text(size=8)) + labs(x=expression("Temperature " ( degree~C)), y="Abundance (Copies per Genome)")
 
 # Two-component Regulatory System Results
 TCRS <- SignificantModules_Summary[grep("two-component", SignificantModules_Summary$`Module Description`),]
@@ -932,7 +936,7 @@ TCRS_M <- join(plot_data_TC, SoilTemp, by = "Site")
 
 TCRS_M$Color <- rep("black",nrow(TCRS_M))
 
-TCRS_plot <- ggplot(TCRS_M, aes(x=Temp, y=Measurement, color=KM)) + geom_smooth(method="lm", inherit.aes=TRUE, se=0) + geom_point(inherit.aes = TRUE) + guides(color=FALSE) + theme_bw(base_size=8) + theme(text=element_text(size=8), axis.text = element_text(size=8)) + labs(x="Temperature (Celsius)", y="Abundance (Copies per Genome)") 
+TCRS_plot <- ggplot(TCRS_M, aes(x=Temp, y=Measurement, color=KM)) + geom_smooth(method="lm",se=0) + geom_point() + guides(color=FALSE) + theme_bw(base_size=8) + theme(text=element_text(size=8), axis.text = element_text(size=8)) + labs(x=expression("Temperature " ( degree~C)), y="Abundance (Copies per Genome)")
 TCRS_plot
 
 ggsave("../Figures/Figure5_TwoComponenetRegulatorySystesms.eps", TCRS_plot, width=4, height=4, units="in")
@@ -948,14 +952,16 @@ plot_data_DR <- melt(DR_M)
 colnames(plot_data_DR) <- c("KM", "Site", "Measurement")
 plot_data_DR <- join(plot_data_DR, SoilTemp, by= "Site")
 
-DR_plot <- ggplot(plot_data_DR, aes(x=Temp, y=Measurement, color=KM)) +geom_point() + geom_smooth(method="lm", se=0) +guides(color=FALSE) + theme_bw(base_size=8) + theme(text=element_text(size=8), axis.text = element_text(size=8)) + labs(x="Temperature (Celsius)", y="Abundance (Copies per Genome)")
+DR_plot <- ggplot(plot_data_DR, aes(x=Temp, y=Measurement, color=KM)) +geom_point() + geom_smooth(method="lm", se=0) +guides(color=FALSE) + theme_bw(base_size=8) + theme(text=element_text(size=8), axis.text = element_text(size=8)) + labs(x=expression("Temperature " ( degree~C)), y="Abundance (Copies per Genome)")
 DR_plot
 ggsave("../Figures/Figure6_DrugResistance_Biosynthesis.eps", DR_plot, width=4, height=4, units="in")
 
+setEPS()
+postscript("../Figures/Figure4_ModuleResponses.eps",  width= 9, height=3)
+par(ps = 8, cex = 1, cex.main = 1)
+Mmp <- multiplot(M_plot, DR_plot,TCRS_plot, cols=3)
+dev.off()
 
-### Finding Maximum Site for each Module
-hist(apply(Combined_Sig_Modules.zs, 1, which.max))
-hist(apply(mid_mod,1,which.max))
 
 ### PCoA's for Module, Ortholog, and UF distacnes
 library(calibrate)
@@ -983,14 +989,14 @@ env=map_MG[,c("SoilTemperature_to10cm", "NO3N_ppm", "pH", "K_ppm", "Mg_ppm", "Or
 
 dev.off()
 setEPS()
-postscript("../Figures/Figure5_KEGGModulePCoA.eps", width = 4, height=4, paper="special")
+postscript("Figures/Figure2_KEGGModulePCoA.eps", width = 4, height=4, paper="special")
 par(ps = 8, cex = 1, cex.main = 1)
 plot(Module.pcoa$points[,1], Module.pcoa$points[,2],cex=1, bg=class, pch=21, xlab= paste("PCoA1: ",100*round(M_ax1.v,3),"% var. explained",sep=""), ylab= paste("PCoA2: ",100* round(M_ax2.v,3),"% var. explained",sep=""))
 #textxy(X=Module.pcoa$points[,1],Y=Module.pcoa$points[,2], lab=map_MG$Sample,cex=.5)
 M_env<- envfit(Module.pcoa,env)
 plot(M_env, p.max=0.05, col="black", lwd=3)
 dev.off()
-
+write.table("Supplemental/Supplemental_EnvFit.txt",x = cbind(M_env$vectors$arrows, M_env$vectors$r, M_env$vectors$pvals), sep="\t", quote = FALSE)
 
 # Trying to plot in ggplot2 BROKEN
 module_plot_data <- cbind.data.frame(Module.pcoa$points[,1], Module.pcoa$points[,2])
@@ -1020,42 +1026,13 @@ vec.sp.df$species<-rownames(vec.sp.df)
 
 
 
-setEPS()
-postscript("../Figures/Figure5.eps", width = 15, height=15, pointsize=12,paper="special")
-plot(KO.pcoa$points[,1], KO.pcoa$points[,2],cex=3, bg=class, pch=21, main= "SCG Median Relativized Bray Curtis KEGG Ortholog PCoA", xlab= paste("PCoA1: ",100*round(KO_ax1.v,3),"% var. explained",sep=""), ylab= paste("PCoA2: ",100* round(KO_ax2.v,3),"% var. explained",sep=""))
-textxy(X=KO.pcoa$points[,1], Y=KO.pcoa$points[,2],labs=map_MG$Sample, cex=2)
+map_MG$Same <- rep(1,nrow(map_MG))
+GnYlOrRd=colorRampPalette(colors=c("green", "yellow", "orange","red"), bias=2)
+Temperature_Points <- ggplot(map_MG, aes(x=map_MG$Sample, y=Same)) + geom_point(aes(y=as.numeric(Same), x=factor(map_MG$Sample, levels=map_MG$Sample[order(map_MG$SoilTemperature_to10cm)]), color=as.numeric(SoilTemperature_to10cm)), size=5) + scale_color_gradientn(colours=GnYlOrRd(5), guide="colorbar", guide_legend(title="Temperature")) +theme_bw()
 
-KO_env=envfit(KO.pcoa, env)
-plot(KO_env, p.max=0.05, col="black")
-dev.off()
-#plot(uf.pcoa$points[,1],uf.pcoa$points[,2] ,cex=3,pch=21,bg=class,main="Weighted UniFrac PCoA",xlab= paste("PCoA1: ",100*round(uf_ax1.v,3),"% var. explained",sep=""), ylab= paste("PCoA2: ",100* round(uf_ax2.v,3),"% var. explained",sep=""))
-#textxy is from the calibrate library
-#textxy(X=uf.pcoa$points[,1], Y=uf.pcoa$points[,2],labs=map_MG$Sample, cex=2)
-#uf_env <- envfit(uf.pcoa, env)
-#plot(uf_env, p.max=0.05, col="black")
-dev.off()
+ggsave("Figure3_TemperatureCircles.eps",width = 4, units = "in", height = 4 )
+
+factor(map_MG$Sample, levels=map_MG$Sample[order(map_MG$SoilTemperature_to10cm)])
 
 
 
-
-
-# Presence Absence Module Table
-mod_PA <- 1*(mid_mod>0)
-colSums(mod_PA)
-mod_FA <- rowSums(mid_mod[,map_MG$Classification=="FireAffected"])
-mod_RecR <- rowSums(mid_mod[,map_MG$Classification!="FireAffected"])
-mod_FA_PA <- 1*(mod_FA>0)
-mod_RecR_PA <- 1*(mod_RecR>0)
-
-### Indicator Module Analysis
-library(indicspecies)
-IndicClusters <- rep(1,12)
-IndicClusters[map_MG$Classification!="FireAffected"]=2
-tmidmod<- t(mid_mod)
-tmidmod <- as.data.frame(tmidmod)
-B=strassoc(tmidmod, cluster=IndicClusters,func="B")
-sel=which(B[,1]>0.2)
-
-indicators(tmidmod[,sel], cluster=IndicClusters, group="1",At=0.5,Bt=0.2, verbose=TRUE)
-wetpt = multipatt(tmidmod, IndicClusters, control=how(nperm=999))
-summary(wetpt)
